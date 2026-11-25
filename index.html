@@ -253,6 +253,8 @@ const POSES={
   cs2:pz(J=>{crouchBase(J);J.body=[0,2,-5];Object.assign(J.ra,{sh:[17,12.5,30.5],el:[15.5,18,26],wr:[13.5,24,19.5],gl:[13,26,17.5]});chinGuardL(J)}),
   sw1:pz(J=>{crouchBase(J);J.body=[0,0,-5.5];J.R.kn=[15,9,6];J.R.ank=[15.5,6.5,2];J.R.fa=[15.5,4.5,1.4];J.R.fb=[15.5,9,1.4]}),
   sw2:pz(J=>{J.body=[0,-.5,-6];J.L.kn=[9,15,7];J.R.kn=[14.3,14,6.5];J.R.ank=[13.6,21.5,2.5];J.R.fa=[13.6,21,1.4];J.R.fb=[13.6,26,1.5]}),
+  fk1:pz(J=>{J.body=[0,-.5,.5];jumpLegs(J);J.R.kn=[14.5,13.5,16.5];J.R.ank=[14.8,11,11];J.R.fa=[14.8,11.5,9.5];J.R.fb=[14.8,15,10];chinGuardL(J)}),
+  fk2:pz(J=>{J.body=[0,-1.5,1];jumpLegs(J);J.R.kn=[13.8,15,18];J.R.ank=[13.3,22.5,18.5];J.R.fa=[13.3,23.5,16.2];J.R.fb=[13.3,24.3,21];Object.assign(J.la,{el:[6,12,29],wr:[8,14,33],gl:[8.5,15,35]});Object.assign(J.ra,{el:[19.5,8,28],wr:[20,6,31],gl:[20,5.5,33]})}),
   da:pz(J=>{J.body=[0,2,-1];legMv(J.L,[0,3,.5]);legMv(J.R,[0,-2,0])}),
   x1:pz(J=>{J.body=[0,-1,-1.5];J.L.kn=[9,13.5,10];J.R.kn=[15,8.5,10];Object.assign(J.ra,{sh:[19,7.5,30.5],el:[20.5,6.5,26.5],wr:[19.5,6,31],gl:[19,5.8,33.2]});Object.assign(J.la,{el:[6.5,16.5,29],wr:[8.8,21,32.5],gl:[9.2,22.8,34]})}),
   x2:pz(J=>{J.body=[0,2.5,-.5];Object.assign(J.ra,{sh:[16.5,13,30.5],el:[14.8,19,31.5],wr:[13.2,26,32.5],gl:[12.7,28.6,33]});Object.assign(J.la,{el:[5.5,12,27],wr:[7.5,13.5,31],gl:[8,14.2,33]});mv(J.R.ank,[0,1,1.2]);mv(J.R.fa,[0,1,1.5])})
@@ -268,6 +270,7 @@ const ATK={
   ult:{st:30,ac:5,rc:30,dmg:35,hs:40,push:10,lift:4,stop:12,reach:.78,h:1.32,r:.42,poses:['x1','x2','x2'],ult:1,heavy:1,cd:1200,lvl:'mid',name:'궁극기'},
   cjab:{st:6,ac:3,rc:11,dmg:3,hs:15,push:1.2,lift:0,stop:3,reach:.6,h:.45,r:.3,poses:['cj1','cj2','cr'],crouch:1,lvl:'low',name:'하단 잽'},
   cstr:{st:14,ac:3,rc:16,dmg:9,hs:20,push:2.2,lift:0,stop:5,reach:.64,h:.5,r:.3,poses:['cs1','cs2','cr'],crouch:1,heavy:1,cg:'str',cd:36,lvl:'low',name:'하단 스트레이트'},
+  fkick:{st:8,ac:6,rc:16,dmg:16,hs:34,push:7,lift:3.4,stop:7,reach:.72,h:.75,r:.36,poses:['fk1','fk2','jp'],air:1,heavy:1,cg:'fkick',cd:120,lvl:'mid',lunge:4.5,name:'날라차기'},
   sweep:{st:16,ac:5,rc:22,dmg:10,hs:30,push:1.5,lift:2.6,stop:6,reach:.7,h:.2,r:.36,poses:['sw1','sw2','cr'],crouch:1,heavy:1,cg:'kick',cd:60,lvl:'low',name:'다리 걸기'}
 };
 
@@ -281,7 +284,7 @@ function keyLabel(c){const m={Space:'Space',ShiftLeft:'Shift',ControlLeft:'Ctrl'
 const kl=a=>keyLabel(bind[a]);
 const actionOf=code=>{const c=norm(code);for(const a in bind)if(bind[a]===c)return a;return null};
 
-function mkF(isAI){return{isAI,x:0,y:0,z:0,vx:0,vy:0,vz:0,face:0,hp:180,max:180,disp:180,ground:true,atk:null,atkId:0,af:0,hit:false,poses:null,dash:0,dashV:[0,0],dashCd:0,ultCd:0,cds:{str:0,kick:0,upp:0},anim:0,crouch:false,crouchHeld:false,block:false,bstun:0,bcrouch:false,trail:[],jumpF:-99,jabChain:0,stepAcc:0,wasBlock:false,wasCrouch:false,state:'free',stun:0,t:0,combo:0,launches:0,comboDmg:0,tilt:0,fx:0,fy:1,flash:0,shake:0,airT:0,
+function mkF(isAI){return{isAI,x:0,y:0,z:0,vx:0,vy:0,vz:0,face:0,hp:180,max:180,disp:180,ground:true,atk:null,atkId:0,af:0,hit:false,poses:null,dash:0,dashV:[0,0],dashCd:0,ultCd:0,cds:{str:0,kick:0,upp:0,fkick:0},anim:0,crouch:false,crouchHeld:false,block:false,bstun:0,bcrouch:false,trail:[],jumpF:-99,jabChain:0,stepAcc:0,wasBlock:false,wasCrouch:false,state:'free',stun:0,t:0,combo:0,launches:0,comboDmg:0,tilt:0,fx:0,fy:1,flash:0,shake:0,airT:0,
   io:{pend:[],jumpQ:-99,cmd:[],yaw:0,mx:0,my:0,run:false,back:false,crouch:false}}}
 const pl=mkF(false),en=mkF(true);pl.y=-2.6;
 const dm={isDummy:true,fx:0,fy:1,x:0,y:0,z:0,vx:0,vy:0,vz:0,hx:0,hy:0,face:Math.PI,hp:300,max:300,disp:300,state:'idle',stun:0,t:0,idleT:0,combo:0,launches:0,comboDmg:0,flash:0,shake:0,tilt:0,alpha:1,airT:0};
@@ -300,6 +303,7 @@ function start(F,n){
   const A=ATK[n];F.jabChain=JABS[n]?(JABS[F.atk]?F.jabChain+1:1):0;F.dash=0;F.atk=n;F.atkId++;F.af=0;F.hit=false;F.face=F.io.yaw;F.poses=A.poses;
   if(n==='upp'&&!F.ground)F.poses=['u1a','u2','u3'];
   if(n==='ajab'||n==='astr')F.vz=Math.max(F.vz,.8);
+  if(A.lunge){F.vx=Math.sin(F.face)*A.lunge;F.vy=Math.cos(F.face)*A.lunge;F.vz=Math.max(F.vz,1.5)}
   if(A.cg)F.cds[A.cg]=A.cd;
   if(A.ult){F.ultCd=A.cd;sfx('charge')}
 }
@@ -309,7 +313,7 @@ function resolveInput(F){
   let newest=-1;for(const p of io.pend)newest=Math.max(newest,p.f);
   const cr=F.ground&&io.crouch,jn=hR&&!cr&&(Math.abs(io.jumpQ-hR.f)<=6||Math.abs(F.jumpF-hR.f)<=6);
   let act=null;
-  if(hL&&hR&&Math.abs(hL.f-hR.f)<=4)act=F.ground?(cr?'sweep':'kick'):'astr';
+  if(hL&&hR&&Math.abs(hL.f-hR.f)<=4)act=F.ground?(cr?'sweep':'kick'):'fkick';
   else{
     if(frame-newest<3)return;
     if(hR){if(jn)act='upp';else if(!F.ground)act='astr';else if(cr)act='cstr';else if(ultCommand(F,hR.f))act='ult';else act='str'}
@@ -459,8 +463,8 @@ function readPlayer(){
   io.mx=mx;io.my=my;io.run=run;io.back=back;io.crouch=!!keys.crouch;
 }
 const DIFF=[{n:'쉬움',think:22,block:.15,low:.1,aggr:.4,follow:.1,dash:.03,idle:.35,ult:.2},{n:'보통',think:12,block:.45,low:.4,aggr:.6,follow:.45,dash:.12,idle:.15,ult:.5},{n:'어려움',think:6,block:.8,low:.75,aggr:.8,follow:.85,dash:.25,idle:.04,ult:.9}];
-const ai={t:0,plan:'idle',hold:0,strafe:1,react:-1};
-function aiStart(F,act){const A=ATK[act];if(!canAct(F)||(A.cg&&F.cds[A.cg]>0))return;if(act==='ult'&&!(F.hp<=F.max*.3&&F.ultCd<=0))return;if((A.crouch||act==='kick'||act==='str'||act==='jab')&&!F.ground)return;F.crouchHeld=!!A.crouch;start(F,act)}
+const ai={t:0,plan:'idle',hold:0,strafe:1,react:-1,fk:-1};
+function aiStart(F,act){const A=ATK[act];if(!canAct(F)||(A.cg&&F.cds[A.cg]>0))return;if(A.air&&F.ground)return;if(act==='ult'&&!(F.hp<=F.max*.3&&F.ultCd<=0))return;if((A.crouch||act==='kick'||act==='str'||act==='jab')&&!F.ground)return;F.crouchHeld=!!A.crouch;start(F,act)}
 function aiAttack(F,T,dist,D,follow){
   const r=Math.random();let act;
   if(!follow&&F.hp<=F.max*.3&&F.ultCd<=0&&r<D.ult*.4)act='ult';
@@ -483,16 +487,18 @@ function aiStep(){
     ai.t=D.think+Math.floor(Math.random()*D.think);ai.hold=0;
     if(Math.random()<D.idle)ai.plan='idle';
     else if(T.state==='down'||T.state==='getup'||T.state==='kodown')ai.plan=dist<1.5?'back':'idle';
+    else if(dist>1.4&&dist<2.6&&F.cds.fkick<=0&&Math.random()<D.aggr*.25){io.jumpQ=frame;ai.fk=frame+5}
     else if(dist>1.8){ai.plan=dist>4?'run':'walk';if(Math.random()<D.dash)dashDir(F,0,1)}
     else if(dist<1.1){if(Math.random()<D.aggr)aiAttack(F,T,dist,D,false);else{ai.plan=Math.random()<.5?'strafe':'back';ai.strafe=Math.random()<.5?1:-1}}
     else ai.plan='walk';
   }
+  if(ai.fk>0&&frame>=ai.fk&&!F.ground){aiStart(F,'fkick');ai.fk=-1}else if(ai.fk>0&&frame>ai.fk+20)ai.fk=-1;
   if(F.atk&&F.hit&&(T.state==='stun'||T.state==='air')&&canAct(F)&&Math.random()<D.follow*.3)aiAttack(F,T,dist,D,true);
   switch(ai.plan){case'walk':io.my=1;break;case'run':io.my=1;io.run=true;break;case'block':io.my=-1;break;case'cblock':io.my=-1;io.crouch=true;break;case'duck':io.crouch=true;break;case'strafe':io.mx=ai.strafe;io.my=dist>1?.5:0;break;case'back':io.my=-1;break}
   io.back=io.my<0;
   if(ai.hold>0&&--ai.hold===0)ai.plan='walk';
 }
-function resetFighter(F,x,y,face){Object.assign(F,{x,y,z:0,vx:0,vy:0,vz:0,face,hp:F.max,disp:F.max,ground:true,atk:null,af:0,hit:false,dash:0,dashCd:0,ultCd:0,cds:{str:0,kick:0,upp:0},state:'free',stun:0,bstun:0,t:0,combo:0,launches:0,comboDmg:0,tilt:0,flash:0,shake:0,airT:0,trail:[],crouch:false,block:false,crouchHeld:false,jabChain:0});Object.assign(F.io,{pend:[],jumpQ:-99,cmd:[],mx:0,my:0,run:false,back:false,crouch:false,yaw:face})}
+function resetFighter(F,x,y,face){Object.assign(F,{x,y,z:0,vx:0,vy:0,vz:0,face,hp:F.max,disp:F.max,ground:true,atk:null,af:0,hit:false,dash:0,dashCd:0,ultCd:0,cds:{str:0,kick:0,upp:0,fkick:0},state:'free',stun:0,bstun:0,t:0,combo:0,launches:0,comboDmg:0,tilt:0,flash:0,shake:0,airT:0,trail:[],crouch:false,block:false,crouchHeld:false,jabChain:0});Object.assign(F.io,{pend:[],jumpQ:-99,cmd:[],mx:0,my:0,run:false,back:false,crouch:false,yaw:face})}
 function startRound(){resetFighter(pl,0,-2.6,0);resetFighter(en,0,2.6,Math.PI);cam.yaw=0;phase='intro';phaseT=100;koT=0;slow=0;fx.length=0;pops.length=0;ai.t=30;ai.plan='idle';ai.hold=0}
 function newMatch(){wins=[0,0];round=1;winner=-1;startRound()}
 function resetTrain(){resetFighter(pl,0,-2.6,0);cam.yaw=0;Object.assign(dm,{x:dm.hx,y:dm.hy,z:0,vx:0,vy:0,vz:0,hp:dm.max,disp:dm.max,state:'idle',stun:0,t:0,idleT:0,combo:0,launches:0,comboDmg:0,tilt:0,alpha:1,airT:0});phase='fight';koT=0;slow=0;fx.length=0;pops.length=0}
@@ -631,7 +637,7 @@ function touchBtn(b,dn){
     case'pause':pause();break;
   }
 }
-const SKL=[{k:'str',n:'스트레이트'},{k:'kick',n:'앞차기'},{k:'upp',n:'어퍼컷'},{k:'ult',n:'궁극기'}];
+const SKL=[{k:'str',n:'스트레이트'},{k:'kick',n:'앞차기'},{k:'upp',n:'어퍼컷'},{k:'fkick',n:'날라차기'},{k:'ult',n:'궁극기'}];
 function hud(){
   ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.filter='none';
   const u=UPX(),f=FPX();
@@ -747,8 +753,8 @@ $('sback').onclick=()=>{$('sset').classList.add('hide');$('menu').classList.remo
 const menuEl=$('menu'),ksEl=$('kset'),ctlEl=$('ctl'),ktab=$('ktab');
 let rebinding=null,lockErrs=0,hadLock=false,guard=false;
 function renderCtl(){
-  const rows=usingTouch?[['이동','왼쪽 화면을 끌기'],['달리기','스틱을 끝까지 밀기'],['막기','스틱을 뒤로 당기기'],['앉아서 이동·공격','앉기를 누른 채로 (하단 공격)'],['앉아 막기','앉기+스틱 뒤로 (하단은 앉아서 막기)'],['카메라','오른쪽 화면을 끌기'],['잽 / 강 / 차기','버튼'],['어퍼컷','어퍼 버튼'],['점프 / 대시 / 앉기','버튼 (앉기는 누르고 있기)'],['궁극기','궁극 버튼 (체력 30% 이하)'],['멈춤','위쪽 가운데 II 버튼']]
-    :[['이동',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')}`],['달리기',kl('run')],['앉기',kl('crouch')],['점프',kl('jump')],['막기',`뒤로 이동 (${kl('back')})`],['앉아서 공격',`${kl('crouch')}+공격 = 하단 공격`],['앉아 막기',`${kl('crouch')}+${kl('back')} (하단은 앉아서만 막혀요)`],['대시','이동 키 두 번'],['잽 (약공격)','좌클릭'],['스트레이트 (강공격)','우클릭'],['앞차기','좌클릭+우클릭'],['어퍼컷','점프+우클릭 (동시에)'],['공중 스트레이트','점프 중 우클릭'],['궁극기',`${kl('back')}→${kl('right')}→${kl('fwd')}→우클릭 (체력 30% 이하)`],['카메라','마우스']];
+  const rows=usingTouch?[['이동','왼쪽 화면을 끌기'],['달리기','스틱을 끝까지 밀기'],['막기','스틱을 뒤로 당기기'],['앉아서 이동·공격','앉기를 누른 채로 (하단 공격)'],['앉아 막기','앉기+스틱 뒤로 (하단은 앉아서 막기)'],['카메라','오른쪽 화면을 끌기'],['잽 / 강 / 차기','버튼'],['어퍼컷','어퍼 버튼'],['날라차기','점프 중 차기 버튼'],['점프 / 대시 / 앉기','버튼 (앉기는 누르고 있기)'],['궁극기','궁극 버튼 (체력 30% 이하)'],['멈춤','위쪽 가운데 II 버튼']]
+    :[['이동',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')}`],['달리기',kl('run')],['앉기',kl('crouch')],['점프',kl('jump')],['막기',`뒤로 이동 (${kl('back')})`],['앉아서 공격',`${kl('crouch')}+공격 = 하단 공격`],['앉아 막기',`${kl('crouch')}+${kl('back')} (하단은 앉아서만 막혀요)`],['대시','이동 키 두 번'],['잽 (약공격)','좌클릭'],['스트레이트 (강공격)','우클릭'],['앞차기','좌클릭+우클릭'],['어퍼컷','점프+우클릭 (동시에)'],['공중 스트레이트','점프 중 우클릭'],['날라차기','점프 중 좌클릭+우클릭'],['궁극기',`${kl('back')}→${kl('right')}→${kl('fwd')}→우클릭 (체력 30% 이하)`],['카메라','마우스']];
   ctlEl.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
   $('keys').style.display=usingTouch?'none':'';
   $('note').textContent=usingTouch?'가로 화면으로 해주세요. 전체화면을 지원하는 브라우저에서는 시작할 때 전체화면으로 바뀌어요.':'시작하면 전체화면으로 바뀌고 마우스가 화면에 고정돼요. 크롬·엣지 전체화면에서는 Ctrl+W를 눌러도 탭이 닫히지 않아요. Esc를 누르면 이 메뉴로 돌아와요.';
