@@ -42,7 +42,6 @@ input[type=checkbox]{width:20px;height:20px;accent-color:#c8323c}
 <table>
 <tr><td>마우스 감도 <span id="sensv"></span></td><td><input type="range" id="sens" min="0.2" max="3" step="0.1"></td></tr>
 <tr><td>효과음 크기 <span id="volv"></span></td><td><input type="range" id="vol" min="0" max="1" step="0.05"></td></tr>
-<tr><td><label for="hc">게임 중 마우스 커서 숨기기</label></td><td><input type="checkbox" id="hc"></td></tr>
 </table>
 <div class="row"><button class="primary" id="sback">돌아가기</button></div>
 </div></div>
@@ -482,7 +481,7 @@ function hud(){
     ctx.textAlign='center';ctx.font=`900 ${96*s}px system-ui,sans-serif`;ctx.lineWidth=10*s;ctx.strokeStyle='#000';ctx.strokeText('K.O.',0,0);ctx.fillStyle='#c8323c';ctx.fillText('K.O.',0,0);ctx.restore();ctx.globalAlpha=1;
   }
   ctx.textAlign='left';ctx.font=`${12*s}px system-ui,sans-serif`;ctx.fillStyle='#6f7286';ctx.fillText('Esc 메뉴',24*s,VH-20*s);
-  if(running&&!lockFailed&&document.pointerLockElement!==cv){ctx.textAlign='center';ctx.font=`600 ${15*s}px system-ui,sans-serif`;ctx.fillStyle='#e8e8ee';ctx.fillText('화면을 클릭하면 마우스가 고정돼요',VW/2,VH-48*s)}
+  if(running&&document.pointerLockElement!==cv){ctx.textAlign='center';ctx.font=`600 ${15*s}px system-ui,sans-serif`;ctx.fillStyle='#e8e8ee';ctx.fillText(lockErrs>=3?'이 창에서는 마우스 고정이 막혀 있어요 · GitHub 링크로 열면 돼요':'화면을 클릭하면 마우스가 고정돼요',VW/2,VH-48*s)}
 }
 let BGC=null,bctx=null,SKY=null,PXS=4,skyHZ=0;
 function ensureBG(){
@@ -520,7 +519,7 @@ function loop(t){
   updateFx(dt);render();requestAnimationFrame(loop);
 }
 
-const SDEF={sens:1,vol:.6,hideCursor:true};let set=Object.assign({},SDEF);
+const SDEF={sens:1,vol:.6};let set=Object.assign({},SDEF);
 try{const v=JSON.parse(localStorage.getItem('shade_set')||'null');if(v)Object.assign(set,v)}catch(e){}
 function saveSet(){try{localStorage.setItem('shade_set',JSON.stringify(set))}catch(e){}}
 let AC=null,MG=null,NB=null;
@@ -549,15 +548,14 @@ function sfx(k){
     case'revive':tn('triangle',523,523,.12,.14);tn('triangle',659,659,.12,.14,.1);tn('triangle',784,784,.2,.14,.2);break;
   }}catch(e){}
 }
-function renderSet(){$('sens').value=set.sens;$('sensv').textContent=set.sens.toFixed(1);$('vol').value=set.vol;$('volv').textContent=Math.round(set.vol*100)+'%';$('hc').checked=set.hideCursor}
+function renderSet(){$('sens').value=set.sens;$('sensv').textContent=set.sens.toFixed(1);$('vol').value=set.vol;$('volv').textContent=Math.round(set.vol*100)+'%'}
 $('sens').oninput=e=>{set.sens=+e.target.value;saveSet();renderSet()};
 $('vol').oninput=e=>{set.vol=+e.target.value;saveSet();renderSet();audioInit();if(MG)MG.gain.value=set.vol};
 $('vol').onchange=()=>sfx('hitH');
-$('hc').onchange=e=>{set.hideCursor=e.target.checked;saveSet()};
 $('opts').onclick=()=>{$('menu').classList.add('hide');$('sset').classList.remove('hide');renderSet()};
 $('sback').onclick=()=>{$('sset').classList.add('hide');$('menu').classList.remove('hide')};
 const menuEl=$('menu'),ksEl=$('kset'),goBtn=$('go'),ctlEl=$('ctl'),ktab=$('ktab');
-let rebinding=null,lockFailed=false,hadLock=false,guard=false;
+let rebinding=null,lockErrs=0,hadLock=false,guard=false;
 function renderCtl(){
   const rows=[['이동',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')}`],['달리기',kl('run')],['앉기',kl('crouch')],['점프',kl('jump')],['막기',`뒤로 이동 (${kl('back')})`],['대시','이동 키 두 번'],['잽 (약공격)','좌클릭'],['스트레이트 (강공격)','우클릭'],['앞차기','좌클릭+우클릭'],['어퍼컷','점프 중 우클릭'],['궁극기',`${kl('back')}→${kl('right')}→${kl('fwd')}→우클릭 (체력 30% 이하)`],['카메라','마우스']];
   ctlEl.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
@@ -566,21 +564,21 @@ function renderKeys(){
   ktab.innerHTML=Object.keys(NAMES).map(a=>`<tr><td>${NAMES[a]}</td><td><button class="kb" data-a="${a}">${rebinding===a?'키를 누르세요':keyLabel(bind[a])}</button></td></tr>`).join('');
   ktab.querySelectorAll('button').forEach(b=>b.onclick=()=>{rebinding=b.dataset.a;renderKeys()});
 }
-function requestLock(){try{const p=cv.requestPointerLock();if(p&&p.catch)p.catch(()=>{lockFailed=true})}catch(e){lockFailed=true}}
+function requestLock(){if(document.pointerLockElement===cv)return;try{const p=cv.requestPointerLock();if(p&&p.catch)p.catch(()=>{lockErrs++})}catch(e){lockErrs++}}
 async function startGame(){
-  menuEl.classList.add('hide');running=true;started=true;last=performance.now();acc=0;audioInit();cv.style.cursor=set.hideCursor?'none':'crosshair';
+  menuEl.classList.add('hide');running=true;started=true;last=performance.now();acc=0;audioInit();
   try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch(e){}
   try{if(navigator.keyboard&&navigator.keyboard.lock)await navigator.keyboard.lock()}catch(e){}
   requestLock();
   if(!guard){guard=true;addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue=''})}
 }
-function pause(){running=false;cv.style.cursor='default';for(const k in keys)keys[k]=false;pend=[];if(document.pointerLockElement)document.exitPointerLock();goBtn.textContent='계속하기';renderCtl();menuEl.classList.remove('hide')}
+function pause(){running=false;for(const k in keys)keys[k]=false;pend=[];if(document.pointerLockElement)document.exitPointerLock();goBtn.textContent='계속하기';renderCtl();menuEl.classList.remove('hide')}
 goBtn.onclick=startGame;
 $('keys').onclick=()=>{menuEl.classList.add('hide');ksEl.classList.remove('hide');renderKeys()};
 $('kback').onclick=()=>{rebinding=null;ksEl.classList.add('hide');renderCtl();menuEl.classList.remove('hide')};
 $('kdef').onclick=()=>{bind=Object.assign({},DEF);saveBind();renderKeys()};
-document.addEventListener('pointerlockerror',()=>{lockFailed=true});
-document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===cv)hadLock=true;else if(running&&hadLock)pause()});
+document.addEventListener('pointerlockerror',()=>{lockErrs++});
+document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===cv){hadLock=true;lockErrs=0;return}else if(running&&hadLock)pause()});
 addEventListener('keydown',e=>{
   if(rebinding){e.preventDefault();if(e.code!=='Escape'){const c=norm(e.code),other=Object.keys(bind).find(k=>bind[k]===c);if(other&&other!==rebinding)bind[other]=bind[rebinding];bind[rebinding]=c;saveBind()}rebinding=null;renderKeys();return}
   if(e.code==='Escape'){if(running){e.preventDefault();pause()}return}
@@ -596,7 +594,7 @@ addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('mousedown',e=>{
   if(!running)return;e.preventDefault();
-  if(!lockFailed&&document.pointerLockElement!==cv){requestLock();return}
+  if(document.pointerLockElement!==cv){requestLock();if(lockErrs<3)return}
   if(e.button===0)press('L');else if(e.button===2)press('R');
 });
 addEventListener('mousemove',e=>{if(!running)return;cam.yaw+=e.movementX*.0026*set.sens;cam.pitch=Math.max(1*DEG,Math.min(80*DEG,cam.pitch+e.movementY*.0022*set.sens))});
