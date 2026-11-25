@@ -330,10 +330,10 @@ function stepPlayer(){
     if(pl.atk&&pl.af>=A.st+A.ac+A.rc)pl.atk=null;
   }else if(pl.dash>0){
     pl.dash--;pl.vx=pl.dashV[0];pl.vy=pl.dashV[1];
-    if(frame%3===0)pl.trail.push({x:pl.x,y:pl.y,z:pl.z,face:pl.face,t:14});
-    if(pl.dash===0){pl.vx*=.3;pl.vy*=.3;pl.dashCd=16}
+    if(frame%5===0)pl.trail.push({x:pl.x,y:pl.y,z:pl.z,face:pl.face,t:10});
+    if(pl.dash===0){pl.vx*=.3;pl.vy*=.3;pl.dashCd=48}
   }else{
-    pl.face=y;
+    pl.face=angLerp(pl.face,y,1-Math.exp(-12*FIX));
     const mx=(keys.right?1:0)-(keys.left?1:0),my=(keys.fwd?1:0)-(keys.back?1:0);
     if(pl.ground&&keys.crouch)pl.crouch=true;
     if(pl.ground&&!pl.crouch&&my<0)pl.block=true;
@@ -507,7 +507,7 @@ function render(){
   ctx=mctx;mctx.drawImage(BGC,shx,shy,BGC.width*PXS,BGC.height*PXS);
   ctx.save();ctx.translate(shx,shy);
   const list=[],pi_=charInfo(pl,pl.face);
-  if(pi_)list.push({d:pi_.depth,f:()=>{for(const t of pl.trail){const ti=charInfo(t,t.face);if(ti)drawSprite(getSprite(SHM.da,ti.di,ti.pi),ti.X,ti.Y,ti.sc,{alpha:t.t/14*.35})}drawSprite(getSprite(SHM[shadePose()],pi_.di,pi_.pi),pi_.X,pi_.Y,pi_.sc)}});
+  if(pi_)list.push({d:pi_.depth,f:()=>{for(const t of pl.trail){const ti=charInfo(t,t.face);if(ti)drawSprite(getSprite(SHM.da,ti.di,ti.pi),ti.X,ti.Y,ti.sc,{alpha:t.t/10*.16})}drawSprite(getSprite(SHM[shadePose()],pi_.di,pi_.pi),pi_.X,pi_.Y,pi_.sc)}});
   const di_=dm.alpha>0?charInfo(dm,dm.face):null;
   if(di_)list.push({d:di_.depth,f:()=>{const sh=dm.shake>0?((dm.shake&1)?1:-1)*2*DPR:0,td=Math.max(0,Math.min(9,Math.round(dm.tilt/DEG/10)));let ai=0;if(td>0){const th=dm.face,lx=dm.fx*Math.cos(th)-dm.fy*Math.sin(th),ly=dm.fx*Math.sin(th)+dm.fy*Math.cos(th);ai=((Math.round(Math.atan2(ly,lx)/(Math.PI/8))%16)+16)%16}drawSprite(getSprite(DUM,di_.di,di_.pi,td,ai),di_.X+sh,di_.Y,di_.sc,{alpha:dm.alpha,flash:dm.flash>0})}});
   list.sort((a,b)=>b.d-a.d).forEach(o=>o.f());
