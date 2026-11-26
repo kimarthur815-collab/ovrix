@@ -964,7 +964,7 @@ function stepDummy(){
 function readPlayer(){
   const io=pl.io;io.yaw=cam.yaw;
   let mx=(keys.right?1:0)-(keys.left?1:0),my=(keys.fwd?1:0)-(keys.back?1:0),run=!!keys.run,back=my<0;
-  if(stick.on){const m=Math.hypot(stick.x,stick.y);if(m>.2){mx=stick.x/m;my=stick.y/m;run=run||m>.85;back=stick.y<-.45*m}else{mx=0;my=0;back=false}}
+  if(pad.on){mx=(pad.d.right?1:0)-(pad.d.left?1:0);my=(pad.d.fwd?1:0)-(pad.d.back?1:0);back=my<0;run=run||(!!pad.run&&pad.d[pad.run])}
   io.mx=mx;io.my=my;io.run=run;io.back=back;io.crouch=!!keys.crouch;io.fly=!!keys.jump;
 }
 const DIFF=[{n:'쉬움',think:22,block:.15,low:.1,aggr:.4,follow:.1,dash:.03,idle:.35,ult:.2},{n:'보통',think:12,block:.45,low:.4,aggr:.6,follow:.45,dash:.12,idle:.15,ult:.5},{n:'어려움',think:6,block:.8,low:.75,aggr:.8,follow:.85,dash:.25,idle:.04,ult:.9}];
@@ -1329,18 +1329,35 @@ function pbar(x,y,w,h,val,max,disp,col,right){
   ctx.fillStyle='rgba(7,8,12,.55)';for(let i=1;i<10;i++)ctx.fillRect(x+Math.round(w*i/10/u)*u,y,u,h);
 }
 let usingTouch=!!(window.matchMedia&&matchMedia('(pointer: coarse)').matches);
-const stick={on:false,id:-1,cx:0,cy:0,x:0,y:0},tps=new Map();
+const tps=new Map();
 const TBTN=[
-  {k:'jab',t:'잽',s:'날개',o:'고리',rx:-100,ry:-100,r:40},{k:'str',t:'강',s:'레이저',o:'부메랑',rx:-196,ry:-78,r:36,cd:'str',scd:'laser',ocd:'boom'},{k:'kick',t:'차기',s:'빛기둥',o:'신의 손',rx:-94,ry:-196,r:36,cd:'kick',scd:'pillar',ocd:'hand'},
-  {k:'upp',t:'어퍼',rx:-190,ry:-172,r:32,cd:'upp',ns:1},{k:'jump',t:'점프',s:'날기',rx:-286,ry:-58,r:32},{k:'dash',t:'대시',rx:-284,ry:-144,r:30,ns:1},
-  {k:'crouch',t:'앉기',s:'하강',rx:-94,ry:-284,r:28},{k:'ult',t:'궁극',rx:-188,ry:-262,r:28},{k:'pause',t:'II',ax:.5,rx:0,ry:26,r:22,top:1}];
+  {k:'jab',t:'잽',s:'날개',o:'고리',rx:-100,ry:-100,r:42},{k:'str',t:'강',s:'레이저',o:'부메랑',rx:-202,ry:-78,r:38,cd:'str',scd:'laser',ocd:'boom'},{k:'kick',t:'차기',s:'빛기둥',o:'신의 손',rx:-92,ry:-204,r:38,cd:'kick',scd:'pillar',ocd:'hand'},
+  {k:'jump',t:'점프',s:'날기',rx:-296,ry:-60,r:34},{k:'crouch',t:'앉기',s:'하강',rx:-196,ry:-180,r:30},{k:'pause',t:'II',ax:.5,rx:0,ry:26,r:22,top:1}];
+// ---- 폰 이동: PC의 W A S D 같은 십자 8방향 버튼. 방향을 두 번 누르면 대시, 그대로 누르고 있으면 달리기
+const pad={on:false,id:null,sec:-1,d:{fwd:false,back:false,left:false,right:false},run:null};
+const PADS=[['right'],['right','fwd'],['fwd'],['fwd','left'],['left'],['left','back'],['back'],['back','right']];
+const padGeo=()=>[Math.round(118*DPR),Math.round(VH-118*DPR),Math.round(68*DPR)];
+function padSet(x,y,ts){
+  const[cx,cy,R]=padGeo(),dx=x-cx,dy=y-cy,l=Math.hypot(dx,dy);let sec=pad.sec;
+  if(l<R*.2)sec=-1;else{const a=Math.atan2(-dy,dx),raw=((Math.round(a/(Math.PI/4))%8)+8)%8;
+    if(sec<0||Math.abs(angDiff(a,sec*Math.PI/4))>Math.PI/8+7*DEG)sec=raw}
+  if(sec===pad.sec)return;pad.sec=sec;const want=sec<0?[]:PADS[sec];
+  for(const a of ['fwd','back','left','right']){const on=want.includes(a);if(on===pad.d[a])continue;pad.d[a]=on;
+    if(on){const gap=tUp[a]===undefined?1e9:ts-tUp[a],dbl=gap>=25&&gap<=260&&(tDur[a]||0)<=260;tUp[a]=undefined;tap(a,ts);if(dbl){pad.run=a;requestDash(a)}}
+    else{tUp[a]=ts;tDur[a]=ts-(tDown[a]||ts);if(pad.run===a)pad.run=null}}
+}
+function padOff(ts){padSet(padGeo()[0],padGeo()[1],ts);pad.on=false;pad.id=null;pad.sec=-1;pad.run=null}
 const btnOn=b=>!(b.ns&&isSer(pl));
 const btnPos=b=>[Math.round((b.ax!==undefined?VW*b.ax:VW)+b.rx*DPR),Math.round((b.top?0:VH)+b.ry*DPR),Math.round(b.r*DPR)];
 function oct(x,y,r,col){const u=UPX(),c=Math.round(r*.32/u)*u;x=Math.round(x);y=Math.round(y);r=Math.round(r);ctx.fillStyle=col;ctx.fillRect(x-r,y-r+c,2*r,2*r-2*c);ctx.fillRect(x-r+c,y-r,2*r-2*c,2*r)}
 function drawTouch(){
-  const u=UPX(),R=60*DPR;
-  if(stick.on){oct(stick.cx,stick.cy,R+u,'rgba(7,8,12,.5)');oct(stick.cx,stick.cy,R,'rgba(255,255,255,.08)');oct(stick.cx+stick.x*R,stick.cy-stick.y*R,24*DPR,'rgba(232,232,238,.6)')}
-  else{const x=110*DPR,y=VH-110*DPR;oct(x,y,R,'rgba(255,255,255,.05)');ptext('이동',x,y-6*u,u,'rgba(232,232,238,.35)','center')}
+  const u=UPX();
+  {const[cx,cy,PR]=padGeo(),w=Math.round(PR*.36/u)*u,arm=[['fwd',0,-1],['back',0,1],['left',-1,0],['right',1,0]];
+    for(const[a,ax,ay]of arm){const x0=cx+ax*PR*.62,y0=cy+ay*PR*.62,hw=ax?PR*.42:w,hh=ay?PR*.42:w;
+      ctx.fillStyle='#07080c';ctx.fillRect(x0-hw-u,y0-hh-u,2*hw+2*u,2*hh+2*u);ctx.fillStyle=pad.d[a]?'#c8323c':'rgba(42,45,59,.82)';ctx.fillRect(x0-hw,y0-hh,2*hw,2*hh);
+      const tx=cx+ax*PR*.66,ty=cy+ay*PR*.66,s=PR*.16;ctx.fillStyle=pad.d[a]?'#ffffff':'rgba(232,232,238,.7)';ctx.beginPath();
+      if(ay){ctx.moveTo(tx,ty+ay*s);ctx.lineTo(tx-s,ty-ay*s*.4);ctx.lineTo(tx+s,ty-ay*s*.4)}else{ctx.moveTo(tx+ax*s,ty);ctx.lineTo(tx-ax*s*.4,ty-s);ctx.lineTo(tx-ax*s*.4,ty+s)}ctx.fill()}
+    ctx.fillStyle='#07080c';ctx.fillRect(cx-w-u,cy-w-u,2*w+2*u,2*w+2*u);ctx.fillStyle=pad.run&&pad.d[pad.run]?'#ffd166':'rgba(42,45,59,.82)';ctx.fillRect(cx-w,cy-w,2*w,2*w)}
   for(const b of TBTN){
     if(!btnOn(b))continue;
     const[x,y,r]=btnPos(b);let cd=0,max=1,locked=false;const op=isOph(pl),ck=op?b.ocd:isSer(pl)?b.scd:b.cd;
@@ -1360,9 +1377,6 @@ function touchBtn(b,dn){
   if(!dn)return;
   switch(b.k){
     case'jab':press('L');break;case'str':press('R');break;case'kick':press('L');press('R');break;
-    case'upp':jumpPress();press('R');break;case'jump':jumpPress();break;
-    case'dash':if(!frozen){const x=stick.on?stick.x:0,y=stick.on?stick.y:1;if(isGuest())net.nq.push(['d',x,y]);else dashDir(pl,x,y)}break;
-    case'ult':if(isGuest()){net.nq.push(['u']);break}if(frozen||!canAct(pl))break;if(isSer(pl)){if(canUlt(pl))serUlt(pl)}else if(canAwaken(pl))shadeUlt(pl);break;
     case'pause':pause();break;
   }
 }
@@ -1407,6 +1421,13 @@ function drawCutin(){
     const W2=ser?['변신','오파님']:['그림자','각성'];skewText(W2[0],0,-tp*8,tp,'#f4f2ea',al,'#07080c');skewText(W2[1],dir>0?tp*6:-tp*6,tp*5,tp,'#ffd166',al,'#07080c');ctx.restore()}
   ctx.restore();
 }
+// 폰에서 궁극기 상태 (버튼이 없어서 HP 아래에 표시)
+function ultLine(F){
+  const ser=isSer(F),sec=n=>(n/60).toFixed(1);
+  if(ser){if(isOph(F))return[`오파님 ${sec(ophEnd()-F.ut)}`,'#ffd166'];if(F.ut)return null}else{if(isAw(F))return[`그림자 각성 ${sec(AW.intro+AW.dur-F.aw)}`,'#ff4b55'];if(F.aw)return null}
+  if(!ultHp(F))return['궁극기 · 체력 30% 이하','#5c5f70'];if(F.ultCd>0)return[`궁극기 ${sec(F.ultCd)}`,'#9a9db0'];
+  return[ser?'궁극기 준비 · ↑ ← ↓ → + 빛기둥':'궁극기 준비 · ↓ → ↑ + 강','#ffd166'];
+}
 function nameOf(F){return ophVis(F)?'오파님':CH[F.ch].n}
 function hud(){
   ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.filter='none';
@@ -1416,6 +1437,7 @@ function hud(){
   const nol=goldK>.05?'#07080c':undefined;
   ptext(nameOf(pl),12*u,8*u,u,ophVis(pl)?'#ffd166':awVis(pl)?'#ff4b55':'#e8e8ee','left','#07080c');ptext(`${Math.ceil(pl.hp)}/${pl.max}`,12*u+bw1,by-16*f,f,'#9a9db0','right',nol);
   pbar(12*u,by,bw1,bh,pl.hp,pl.max,pl.disp,'#e35d66',false);
+  if(usingTouch){const L=ultLine(pl);if(L)ptext(L[0],12*u,by+bh+(mode!=='train'?16:6)*u,f,L[1],'left','#07080c')}
   const R=mode!=='train'?{n:mode==='online'?`상대 · ${nameOf(en)}`:`${nameOf(en)} AI`,e:en,col:'#d6d5dc',w:Math.min(bwMax,Math.round(144*en.max/180)*u)}:{n:'허수아비',e:dm,col:'#d9b45a',w:Math.min(bwMax,180*u)};
   ptext(R.n,VW-12*u,8*u,u,'#e8e8ee','right','#07080c');ptext(`${Math.ceil(R.e.hp)}/${R.e.max}`,VW-12*u-R.w,by-16*f,f,'#9a9db0','left',nol);
   pbar(VW-12*u-R.w,by,R.w,bh,R.e.hp,R.e.max,R.e.disp,R.col,true);
@@ -2009,9 +2031,9 @@ function renderUI(){
 function playVS(cb){hideAllUI();uiScene='vs';vsT0=performance.now();sfx('ult');setTimeout(cb,1400)}
 function renderCtl(){
   const ser=set.ch==='seraph';
-  const rows=ser?(usingTouch?[['이동','왼쪽 화면을 끌기'],['막기','스틱을 뒤로 당기기 (날개로 감싸서 모든 높이를 막아요)'],['날기','날기 버튼을 누르고 있기 (최대 1.5 m)'],['내려가기','날기 버튼 떼기 또는 하강 버튼'],['날개치기','날개 버튼'],['눈 레이저','레이저 버튼 · 모았다가 가슴 높이로 발사 (앉거나 옆으로 달리면 피함)'],['빛기둥','빛기둥 버튼 · 상대 발밑에 표시되고 0.8초 뒤 떨어져요 (못 막음)'],['날개 판정','날개에 맞으면 덜 아프지만, 쌓이면 5초 동안 못 날아요'],['궁극기 · 오파님 변신','궁극 버튼 (체력 30% 이하, 훈련에선 언제든) · 10초 동안 변신'],['오파님 기술','고리 버튼 = 고리 회전 · 부메랑 버튼 = 고리 부메랑 (고리 3개까지) · 신의 손 버튼 = 하늘에서 거대한 손 (못 막음)'],['카메라','오른쪽 화면을 끌기'],['멈춤','위쪽 가운데 II 버튼']]
+  const rows=ser?(usingTouch?[['이동','왼쪽 십자 버튼 (사이를 누르면 대각선)'],['달리기','방향을 두 번 누르고 그대로 누르고 있기'],['막기','뒤 방향 (날개로 감싸서 모든 높이를 막아요)'],['날기','날기 버튼을 누르고 있기 (최대 1.5 m)'],['내려가기','날기 버튼 떼기 또는 하강 버튼'],['날개치기','날개 버튼'],['눈 레이저','레이저 버튼 · 모았다가 가슴 높이로 발사 (앉거나 옆으로 달리면 피함)'],['빛기둥','빛기둥 버튼 · 상대 발밑에 표시되고 0.8초 뒤 떨어져요 (못 막음)'],['날개 판정','날개에 맞으면 덜 아프지만, 쌓이면 5초 동안 못 날아요'],['궁극기 · 오파님 변신','십자로 ↑ ← ↓ → 차례로 누르고 빛기둥 버튼 (체력 30% 이하, 훈련에선 언제든) · 10초 동안 변신'],['오파님 기술','고리 버튼 = 고리 회전 · 부메랑 버튼 = 고리 부메랑 (고리 3개까지) · 신의 손 버튼 = 하늘에서 거대한 손 (못 막음)'],['카메라','오른쪽 화면을 끌기'],['멈춤','위쪽 가운데 II 버튼']]
     :[['이동',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')}`],['달리기',kl('run')],['날기',`${kl('jump')} 누르고 있기 (최대 1.5 m)`],['내려가기',`${kl('jump')} 떼기 또는 ${kl('crouch')}`],['막기',`뒤로 이동 (${kl('back')}) · 날개로 감싸서 모든 높이를 막아요`],['날개치기','좌클릭'],['눈 레이저','우클릭 · 모았다가 가슴 높이로 발사 (앉거나 옆으로 달리면 피함)'],['빛기둥','좌클릭+우클릭 · 상대 발밑에 표시되고 0.8초 뒤 떨어져요 (못 막음)'],['날개 판정','날개에 맞으면 덜 아프지만, 쌓이면 5초 동안 못 날아요'],['궁극기 · 오파님 변신',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')} 차례로 누르고 좌클릭+우클릭 (체력 30% 이하, 훈련에선 언제든) · 10초 동안 변신`],['오파님 기술','좌클릭 = 고리 회전 · 우클릭 = 고리 부메랑 (고리 3개까지) · 좌클릭+우클릭 = 신의 손 (하늘에서 거대한 손, 못 막음)'],['카메라','마우스']])
-    :usingTouch?[['이동','왼쪽 화면을 끌기'],['달리기','스틱을 끝까지 밀기'],['막기','스틱을 뒤로 당기기'],['앉아서 이동·공격','앉기를 누른 채로 (하단 공격)'],['앉아 막기','앉기+스틱 뒤로 (하단은 앉아서 막기)'],['카메라','오른쪽 화면을 끌기'],['잽 / 강 / 차기','버튼'],['어퍼컷','어퍼 버튼'],['날라차기','점프 중 차기 버튼'],['점프 / 대시 / 앉기','버튼 (앉기는 누르고 있기)'],['그림자 각성','궁극 버튼 (체력 30% 이하, 훈련에선 언제든) · 10초 동안 빨라지고 잔상이 공격을 한 번 더 해요'],['멈춤','위쪽 가운데 II 버튼']]
+    :usingTouch?[['이동','왼쪽 십자 버튼 (사이를 누르면 대각선)'],['대시 · 달리기','방향을 두 번 누르면 대시, 그대로 누르고 있으면 달리기'],['막기','뒤 방향'],['앉아서 이동·공격','앉기를 누른 채로 (하단 공격)'],['앉아 막기','앉기+뒤 방향 (하단은 앉아서 막기)'],['카메라','오른쪽 빈 화면을 끌기'],['잽 / 강 / 차기','버튼'],['어퍼컷','점프+강 동시에'],['날라차기','점프 중 차기 버튼'],['점프 / 앉기','버튼 (앉기는 누르고 있기)'],['그림자 각성','십자로 ↓ → ↑ 차례로 누르고 강 버튼 (체력 30% 이하, 훈련에선 언제든) · 10초 동안 빨라지고 잔상이 공격을 한 번 더 해요'],['멈춤','위쪽 가운데 II 버튼']]
     :[['이동',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')}`],['달리기',kl('run')],['앉기',kl('crouch')],['점프',kl('jump')],['막기',`뒤로 이동 (${kl('back')})`],['앉아서 공격',`${kl('crouch')}+공격 = 하단 공격`],['앉아 막기',`${kl('crouch')}+${kl('back')} (하단은 앉아서만 막혀요)`],['대시','이동 키 두 번'],['잽 (약공격)','좌클릭'],['스트레이트 (강공격)','우클릭'],['앞차기','좌클릭+우클릭'],['어퍼컷','점프+우클릭 (동시에)'],['공중 스트레이트','점프 중 우클릭'],['날라차기','점프 중 좌클릭+우클릭'],['그림자 각성',`${kl('back')}→${kl('right')}→${kl('fwd')}→우클릭 (체력 30% 이하, 훈련에선 언제든) · 10초 동안 빨라지고 잔상이 공격을 한 번 더 해요`],['카메라','마우스']];
   ctlEl.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');$('helpT').textContent=`조작법 · ${CH[set.ch].n}`;
   $('keys').style.display=$('pKeys').style.display=usingTouch?'none':'';
@@ -2084,7 +2106,7 @@ function bakeOphPart(k,o){
 function tryFull(e){audioInit();if(document.fullscreenElement||rebinding||(e.type==='keydown'&&e.code==='Escape')||(e.target&&e.target.tagName==='INPUT'))return;goFull()}
 for(const t of ['pointerup','touchend','click','keydown'])addEventListener(t,tryFull,true);
 function goFull(){const d=document.documentElement;if(document.fullscreenElement||!d.requestFullscreen)return;d.requestFullscreen().then(()=>{try{if(usingTouch)screen.orientation.lock('landscape').catch(()=>{});else if(navigator.keyboard&&navigator.keyboard.lock)navigator.keyboard.lock().catch(()=>{})}catch(e){}},()=>{})}
-function stopInput(){for(const k in keys)keys[k]=false;pl.io.pend=[];stick.on=false;stick.x=stick.y=0;tps.clear();for(const b of TBTN)b.down=false}
+function stopInput(){for(const k in keys)keys[k]=false;pl.io.pend=[];pad.on=false;pad.id=null;pad.sec=-1;pad.run=null;for(const a in pad.d)pad.d[a]=false;tps.clear();for(const b of TBTN)b.down=false}
 function pause(){running=false;stopInput();if(document.pointerLockElement)document.exitPointerLock();$('resume').style.display=phase==='match'?'none':'';renderCtl();hideAllUI();$('pausep').classList.remove('hide')}
 function showResult(){running=false;stopInput();if(document.pointerLockElement)document.exitPointerLock();menuEl.classList.add('hide');$('again').style.display='';$('again').textContent=mode==='online'?'방으로':'다시하기';$('toMenu').textContent=mode==='online'?'나가기':'메인 화면';$('resT').textContent=winner===0?'승리!':'패배…';$('resS').textContent=mode==='online'?`${wins[0]} : ${wins[1]} · 온라인 대전`:`${wins[0]} : ${wins[1]} · AI 난이도 ${DIFF[diff].n}`;$('resume').style.display='none';$('result').classList.remove('hide')}
 function renderCh(){const f=selMode==='room'?net.pch:set.foe;document.querySelectorAll('#chRow .tile[data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===set.ch));document.querySelectorAll('#foeRow .tile[data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===f))}
@@ -2136,16 +2158,16 @@ cv.addEventListener('pointerdown',e=>{
   const x=e.clientX*DPR,y=e.clientY*DPR;let hit=null;
   for(const b of TBTN){if(!btnOn(b))continue;const[bx,by,r]=btnPos(b);if(Math.abs(x-bx)<=r*1.15&&Math.abs(y-by)<=r*1.15){hit=b;break}}
   if(hit){tps.set(e.pointerId,{role:'btn',b:hit});hit.down=true;touchBtn(hit,true);return}
-  if(x<VW*.42&&!stick.on){stick.on=true;stick.id=e.pointerId;stick.cx=x;stick.cy=y;stick.x=stick.y=0;tps.set(e.pointerId,{role:'stick'});return}
+  {const[px,py,pr]=padGeo();if(!pad.on&&Math.hypot(x-px,y-py)<=pr*1.3){pad.on=true;pad.id=e.pointerId;pad.sec=-1;tps.set(e.pointerId,{role:'pad'});padSet(x,y,e.timeStamp);return}}
   tps.set(e.pointerId,{role:'cam',x,y});
 },{passive:false});
 cv.addEventListener('pointermove',e=>{
   const t=tps.get(e.pointerId);if(!t)return;e.preventDefault();
   const x=e.clientX*DPR,y=e.clientY*DPR;
-  if(t.role==='stick'){const R=60*DPR;let dx=x-stick.cx,dy=y-stick.cy;const l=Math.hypot(dx,dy);if(l>R){dx*=R/l;dy*=R/l}stick.x=dx/R;stick.y=-dy/R}
+  if(t.role==='pad')padSet(x,y,e.timeStamp);
   else if(t.role==='cam'){cam.yaw+=(x-t.x)/DPR*.008*set.sens;cam.pitch=Math.max(1*DEG,Math.min(80*DEG,cam.pitch+(y-t.y)/DPR*.006*set.sens));t.x=x;t.y=y}
 },{passive:false});
-const touchEnd=e=>{const t=tps.get(e.pointerId);if(!t)return;tps.delete(e.pointerId);if(t.role==='stick'){stick.on=false;stick.x=stick.y=0}else if(t.role==='btn'){t.b.down=false;touchBtn(t.b,false)}};
+const touchEnd=e=>{const t=tps.get(e.pointerId);if(!t)return;tps.delete(e.pointerId);if(t.role==='pad')padOff(e.timeStamp);else if(t.role==='btn'){t.b.down=false;touchBtn(t.b,false)}};
 cv.addEventListener('pointerup',touchEnd);cv.addEventListener('pointercancel',touchEnd);
 cv.addEventListener('mousedown',e=>{
   if(usingTouch){usingTouch=false;renderCtl()}
