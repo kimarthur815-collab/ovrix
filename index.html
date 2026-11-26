@@ -524,7 +524,7 @@ const ATK={
   laser:{st:34,ac:12,rc:22,dmg:16,hs:22,push:3,lift:0,stop:5,reach:0,h:0,r:0,poses:['lz1','lz2','lz1'],tl:[[13,'lz0'],[34,'lz1'],[46,'lz2'],[56,'lz1'],[68,'lz0']],beam:1,heavy:1,cg:'laser',cd:120,lvl:'high',name:'눈 레이저'},
   pillar:{st:20,ac:1,rc:20,dmg:20,hs:30,push:1,lift:4.5,stop:8,reach:0,h:0,r:0,poses:['sp1','sp2','sp0'],tl:[[8,'sp0'],[20,'sp1'],[24,'sp2'],[34,'sp2'],[41,'sp0']],zap:1,unblock:1,heavy:1,cg:'pillar',cd:300,lvl:'mid',name:'빛기둥'},
   ring:{st:9,ac:13,rc:14,dmg:8,hs:20,push:6,lift:2.2,stop:5,reach:0,h:0,r:0,poses:['i0','i0','i0'],multi:7,rad:2.1,heavy:1,lvl:'mid',name:'고리 회전'},
-  boom:{st:14,ac:1,rc:10,dmg:12,hs:22,push:4.5,lift:1.6,stop:5,reach:0,h:0,r:0,poses:['i0','i0','i0'],proj:1,heavy:1,cg:'boom',cd:24,lvl:'mid',name:'고리 부메랑'},
+  boom:{st:14,ac:1,rc:10,dmg:10,hs:22,push:4.5,lift:1.6,stop:5,reach:0,h:0,r:0,poses:['i0','i0','i0'],proj:1,heavy:1,cg:'boom',cd:24,lvl:'mid',name:'고리 부메랑'},
   hand:{st:18,ac:1,rc:24,dmg:24,hs:40,push:1,lift:0,stop:12,reach:0,h:0,r:0,poses:['i0','i0','i0'],summon:1,unblock:1,heavy:1,cg:'hand',cd:420,lvl:'mid',name:'신의 손'}
 };
 
@@ -721,7 +721,7 @@ function stepSeraphFree(F,T){
     if(F.af===1&&F.atk==='wing')sfx('swing');
     if(F.af===1&&F.atk==='hand')sfx('charge');
     if(F.af===A.st){sfx(A.beam?'laser':A.zap?'charge':A.rad?'spin':A.proj?'throw':A.summon?'holy':'swingH');if(A.zap)spawnZap(F);if(A.proj)spawnOrb(F);if(A.summon)spawnHand(F)}
-    if(A.rad&&F.af===A.st+A.multi)sfx('spin');
+    if(A.rad&&ringsLeft(F)&&F.af===A.st+A.multi)sfx('spin');
     if(A.beam){if(F.af>=A.st&&F.af<A.st+A.ac)beamHit(F,A,T)}else if(A.rad)ringHit(F,A,T);else if(!A.zap&&!A.proj&&!A.summon)checkHit(F,A,T);
     {const mx=frozen?0:io.mx,my=frozen?0:io.my;let sp=0;if(mx||my)sp=(io.run?(op?5:4.2):(op?2.6:2))*.35*(F.wbT>0?.6:1);let dx=FW[0]*my+RT[0]*mx,dy=FW[1]*my+RT[1]*mx;const l=Math.hypot(dx,dy)||1,k=Math.min(1,6*FIX);F.vx+=(dx/l*sp-F.vx)*k;F.vy+=(dy/l*sp-F.vy)*k}
     if(F.atk&&F.af>=A.st+A.ac+A.rc)F.atk=null;
@@ -752,7 +752,7 @@ function wingHit(T,raw){
 // ---- 세라핌 궁극기: 오파님 변신 (F.ut = 변신 시작 후 지난 프레임, 0이면 변신 안 함)
 const OPH={flash:40,tfi:72,dur:600,tfo:36,ofl:18,cd:1200,gap:20,burstR:4.2,rad:1.05,hc:1.68};
 const HAND={trackT:36,dropT:30,hitT:58,upT:92,end:112,r:1.9,top:14};
-const ORB={out:44,r:1,dz:1.25,back:8.5,acc:.3,weak:.2};
+const ORB={out:56,r:1,dz:1.25,back:6.5,acc:.22,weak:.2};
 const orbs=[],hands=[];let burst=null;
 const ophEnd=()=>OPH.tfi+OPH.dur;
 function isOph(F){return isSer(F)&&F.ut>=OPH.tfi&&F.ut<ophEnd()}
@@ -825,7 +825,10 @@ function blastPush(F,R){
   if(!T.isDummy){T.ground=false;T.atk=null;T.dash=0;T.block=false;T.bstun=0;T.crouch=false;T.stun=0}
 }
 function foeR(T){return T.isDummy?.33:isOph(T)?OPH.rad:isSer(T)?.65:.3}
-function ringHit(F,A,T){
+// 고리 회전은 몸에 남은 고리 수만큼 약해짐 (3개=그대로, 0개=눈만 도는 약한 한 방)
+const RING_K=[[1.3,.35,0],[1.6,.6,7],[1.85,.8,7],[2.1,1,7]],RINGA=[];
+function ringA(F){const n=Math.min(3,ringsLeft(F));if(!RINGA[n]){const[r,k,m]=RING_K[n],A=ATK.ring;RINGA[n]=Object.assign({},A,{rad:r,dmg:Math.max(1,Math.round(A.dmg*k)),multi:m,lift:A.lift*(.5+.5*k),push:A.push*(.6+.4*k)})}return RINGA[n]}
+function ringHit(F,A,T){A=ringA(F);
   if(A.multi&&F.af>A.st&&(F.af-A.st)%A.multi===0)F.hit=false;
   if(!T||F.hit||F.af<A.st||F.af>=A.st+A.ac||!vulnerable(T))return;
   const dx=T.x-F.x,dy=T.y-F.y,d=Math.hypot(dx,dy),rT=foeR(T),th=hurtH(T);
@@ -1259,9 +1262,9 @@ function arcPts(F,r,h,a0,a1,n){const out=[];for(let i=0;i<=n;i++){const a=F.face
 function drawSwings(){
   for(const F of mode==='train'?[pl]:[pl,en]){
     if(!F.atk)continue;const A=ATK[F.atk],k=F.af-A.st+1;if(k<0||k>A.ac+4)continue;const p=Math.min(1,k/(A.ac+1)),fade=k>A.ac?1-(k-A.ac)/5:1;
-    if(isOph(F)&&F.atk==='ring'){for(const[hh,sg]of [[1.05,1],[2.3,-1]]){const a0=sg*F.af*.6,pts=arcPts(F,1.95,hh,a0,a0+sg*2.6,12);for(let i=0;i<12;i++)thickLine(pts[i],pts[i+1],.05+.12*i/12,`rgba(255,${200+40*i/12|0},120,${(.12+.6*i/12)*fade})`)}}
+    if(isOph(F)&&F.atk==='ring'){const RA=ringA(F);for(const[hh,sg]of (ringsLeft(F)?[[1.05,1],[2.3,-1]]:[[1.68,1]])){const a0=sg*F.af*.6,pts=arcPts(F,RA.rad*.93,hh,a0,a0+sg*2.6,12);for(let i=0;i<12;i++)thickLine(pts[i],pts[i+1],.05+.12*i/12,`rgba(255,${200+40*i/12|0},120,${(.12+.6*i/12)*fade})`)}}
     else if(isSer(F)&&F.atk==='wing'){for(const sg of [-1,1]){const pts=arcPts(F,1.9,1.3,sg*1.9,sg*(1.9-1.7*p),10);for(let i=0;i<10;i++)thickLine(pts[i],pts[i+1],.07+.12*i/10,`rgba(248,244,234,${(.15+.55*i/10)*fade})`)}}
-    else if(!isSer(F)&&SHADE_FX){
+    else if(!isSer(F)){
       const f=[Math.sin(F.face),Math.cos(F.face)],col=isAw(F)?'255,90,100':'255,255,255';
       if(F.atk==='upp'){thickLine([F.x+f[0]*.35,F.y+f[1]*.35,F.z+.6],[F.x+f[0]*.35,F.y+f[1]*.35,F.z+.6+1.3*p],.05,`rgba(${col},${.6*fade})`)}
       else if(F.atk==='kick'||F.atk==='sweep'||F.atk==='fkick'){const pts=arcPts(F,A.reach+.1,A.h,-.9,-.9+1.8*p,8);for(let i=0;i<8;i++)thickLine(pts[i],pts[i+1],.04+.05*i/8,`rgba(${col},${(.15+.5*i/8)*fade})`)}
@@ -1346,7 +1349,9 @@ function drawTouch(){
     if(b.k==='ult'){if(isSer(pl)){cd=pl.ut?0:pl.ultCd;max=ultCdOf(OPH.cd);locked=!ultHp(pl)||pl.ut>0}else{cd=pl.aw?0:pl.ultCd;max=ultCdOf(AW.cd);locked=!ultHp(pl)||pl.aw>0}}
     oct(x,y,r+u,'#07080c');oct(x,y,r,b.down?'#c8323c':locked?'rgba(26,27,34,.85)':'rgba(42,45,59,.85)');
     if(cd>0){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(x-r,y-r,2*r,Math.round(2*r*cd/max/u)*u)}
-    ptext(cd>0?(cd/60).toFixed(1):op&&b.ocd==='boom'?`부메랑 ${ringsLeft(pl)}`:(op&&b.o)||(isSer(pl)&&b.s)||b.t,x,y-6*u,u,locked?'#5c5f70':'#ffffff','center');
+    const lab=cd>0?(cd/60).toFixed(1):(op&&b.o)||(isSer(pl)&&b.s)||b.t,lu=lab.length>3?Math.max(1,Math.round(u*.75)):u;
+    ptext(lab,x,y-6*lu,lu,locked?'#5c5f70':'#ffffff','center');
+    if(op&&b.ocd==='boom')ptext(String(ringsLeft(pl)),x+r*.8,y-r*1.15,u,'#ffd166','center','#07080c');
   }
 }
 function touchBtn(b,dn){
@@ -1484,9 +1489,8 @@ function drawShafts(t){
 function tiltIdx(E){const td=Math.max(0,Math.min(9,Math.round(E.tilt/DEG/10)));let a=0;if(td>0){const th=E.face,lx=E.fx*Math.cos(th)-E.fy*Math.sin(th),ly=E.fx*Math.sin(th)+E.fy*Math.cos(th);a=((Math.round(Math.atan2(ly,lx)/(Math.PI/8))%16)+16)%16}return[td,a]}
 function modelSet(F){const p=skinOf(F);return isSer(F)?(p?SRM2:SRM):(p?SHM2:SHM)}
 function skinOf(F){const o=F===pl?en:pl;if(mode==='train'||F.ch!==o.ch)return 0;return(F===pl)===isGuest()?1:0}
-const SHADE_FX=/[?&]shadefx=1/.test(location.search);
 function visOf(F){
-  const o={rot:0,dx:0,dy:0,sx:1,sy:1,lift:0},ser=isSer(F);if(!ser&&!SHADE_FX)return o;
+  const o={rot:0,dx:0,dy:0,sx:1,sy:1,lift:0},ser=isSer(F);
   const vr=F.vx*C.r[0]+F.vy*C.r[1];o.rot=Math.max(-.1,Math.min(.1,vr*(ser?.012:.025)));
   let push=0,px=F.fx,py=F.fy;
   if(F.flash>0){push=.15*F.flash/5;if(!ser){o.sx=1+.07*F.flash/5;o.sy=1-.07*F.flash/5}}
@@ -1499,10 +1503,10 @@ function visOf(F){
 }
 function visTick(F){
   const ser=isSer(F);
-  if(F.ground&&F._g===false){F._land=6;if(ser?(F.wbT>0||F.state==='kodown'):SHADE_FX)dust(F.x,F.y,ser?16:8,ser?1.3:.4)}
+  if(F.ground&&F._g===false){F._land=6;if(!ser||F.wbT>0||F.state==='kodown')dust(F.x,F.y,ser?16:8,ser?1.3:.4)}
   F._g=F.ground;if(F._land>0)F._land--;
   if(ser&&F.flash>(F._fl||0)&&!ophVis(F))feathers(F);
-  if(!ser&&SHADE_FX&&F.flash>(F._fl||0)&&(F.state==='down'||F.state==='air'))dust(F.x,F.y,4,.3);
+  if(!ser&&F.flash>(F._fl||0)&&(F.state==='down'||F.state==='air'))dust(F.x,F.y,4,.3);
   F._fl=F.flash;
 }
 function feathers(F){const o=skinOf(F)?SP2:SP1,cs=[o.f1,o.f2,o.cov,o.tip].map(c=>'#'+c.toString(16).padStart(6,'0'));
@@ -1516,7 +1520,7 @@ function eyePos(m,c){
   for(const q of P){const g=G[q[0]<mid?0:1];g[0]+=q[0];g[1]+=q[1];g[2]+=q[2];g[3]++}
   return G.filter(g=>g[3]).map(g=>[g[0]/g[3]*.02,g[1]/g[3]*.02,g[2]/g[3]*.02]);
 }
-function awAura(F,ci){
+function awAura(F,ci,v){
   const n=awIn(F)?4:2,cs=['#07070b','#141019','#2a0f1a','#5a1420'];
   for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,r=.18+Math.random()*.22;fx.push({x:F.x+Math.cos(a)*r,y:F.y+Math.sin(a)*r,z:F.z+Math.random()*(F.crouch?1:1.6),vx:Math.cos(a)*.3,vy:Math.sin(a)*.3,vz:1.2+Math.random()*1.4,g:-.6,drag:1.2,t:0,max:.4+Math.random()*.3,sz:.03+Math.random()*.03,fade:1,col:cs[(Math.random()*4)|0]})}
   if(F.state!=='free')return;const m=SHM[poseOf(F)],E=m&&m.eyes;if(!E)return;
@@ -1525,7 +1529,8 @@ function awAura(F,ci){
   // 도트는 32방향·10도 단위 각도로 미리 그린 한 장이라 실제 원근과 조금 다름 → 도트 속 눈 자리를 계산해서 그 화면 위치에 찍음
   const phi=ci.di*Math.PI/16,cf=Math.cos(phi),sf=Math.sin(phi),pp=(ci.pi===0?3:ci.pi*10)*DEG,ct=Math.cos(pp),st=Math.sin(pp),k=ci.sc/.02;
   for(const e of E){const dep=toCam(F.x+rt[0]*e[0]+f[0]*e[1],F.y+rt[1]*e[0]+f[1]*e[1],F.z+e[2])[2];if(dep<.2)continue;
-    const sx=ci.X+(e[0]*cf-e[1]*sf)*k,sy=ci.Y-(e[2]*ct+(e[0]*sf+e[1]*cf)*st)*k,qx=(sx-VW/2)*dep/C.foc,qy=(VH/2-sy)*dep/C.foc;
+    const lx=(e[0]*cf-e[1]*sf)*k*(v.sx||1),ly=-(e[2]*ct+(e[0]*sf+e[1]*cf)*st)*k*(v.sy||1),cr=Math.cos(v.rot||0),sr=Math.sin(v.rot||0);
+    const sx=ci.X+v.dx+lx*cr-ly*sr,sy=ci.Y+v.dy+lx*sr+ly*cr,qx=(sx-VW/2)*dep/C.foc,qy=(VH/2-sy)*dep/C.foc;
     fx.push({x:C.x+qx*C.r[0]+qy*C.u[0]+dep*C.f[0],y:C.y+qx*C.r[1]+qy*C.u[1]+dep*C.f[1],z:C.z+qy*C.u[2]+dep*C.f[2],vx:0,vy:0,vz:0,g:0,t:0,max:.22,sz:.03,fade:1,col:'#ff2a3a'})}
 }
 function echoList(list){
@@ -1537,12 +1542,15 @@ function echoList(list){
 }
 function pushFighter(list,F,M){
   if(isSer(F)&&F.ut){pushOph(list,F,M,visOf(F));return}
-  const ser=isSer(F),v=visOf(F),ci=charInfo(v.lift?{x:F.x,y:F.y,z:F.z+v.lift}:F,F.face,ser?2.4:.9);if(!ci)return;visTick(F);if(!ser&&awVis(F))awAura(F,ci);
+  const ser=isSer(F),v=visOf(F),ci=charInfo(v.lift?{x:F.x,y:F.y,z:F.z+v.lift}:F,F.face,ser?2.4:.9);if(!ci)return;visTick(F);if(!ser&&awVis(F))awAura(F,ci,v);
   list.push({d:ci.depth,f:()=>{
     for(const t of F.trail){const ti=charInfo(t,t.face);if(ti)drawSprite(getSprite(M.da,ti.di,ti.pi),ti.X,ti.Y,ti.sc,{alpha:t.t/10*.16})}
     const[td,a]=ser?[0,0]:tiltIdx(F),sh=F.shake>0?((F.shake&1)?1:-1)*2*DPR:0,pose=poseOf(F),mm=M[pose];if(!mm)return;
-    const X=ci.X+sh+v.dx,Y=ci.Y+v.dy,op={flash:F.flash>0,rot:v.rot,sx:v.sx,sy:v.sy};
-    drawSprite(getSprite(mm,ci.di,ci.pi,td,a),X,Y,ci.sc,op);
+    const X=ci.X+sh+v.dx,Y=ci.Y+v.dy,op={flash:F.flash>0,rot:v.rot,sx:v.sx,sy:v.sy},sp=getSprite(mm,ci.di,ci.pi,td,a);
+    // 카메라를 낮춰서 내 세라핌이 상대를 가리면 반투명하게
+    if(ser&&F===pl&&sp){const T=foeOf(F);let hide=false;if(T){const c=toCam(T.x,T.y,T.z+hurtH(T)*.6);if(c[2]>ci.depth){const q=proj(c),x0=X-sp.ax*ci.sc,y0=Y-sp.ay*ci.sc;hide=q[0]>x0&&q[0]<x0+sp.c.width*ci.sc&&q[1]>y0&&q[1]<y0+sp.c.height*ci.sc}}
+      F._al=(F._al===undefined?1:F._al)+((hide?.45:1)-(F._al===undefined?1:F._al))*.15;if(F._al<.99)op.alpha=F._al}
+    drawSprite(sp,X,Y,ci.sc,op);
     if(ser){const EP=EYEP[skinOf(F)];let d=((ci.di-16)%32+32)%32;if(d>16)d=32-d;if(d>7)return;
       const[ik,lk]=eyeOf(F),bob=2*((SPOSES[pose]&&SPOSES[pose].bob)||0),dy=-bob*Math.cos((ci.pi===0?3:ci.pi*10)*DEG)*ci.sc;
       for(const k of [ik,lk])if(k&&EP[k])drawSprite(getSprite(EP[k],ci.di,ci.pi),X,Y+dy,ci.sc,op);}
@@ -1807,11 +1815,11 @@ function onNet(m){
     case'rdy':net.prdy=!!m.r;hostCheckCd();break;
     case'map':if(!isGuest())return;net.map=m.m==='cage'?'cage':'floor';if(inRoom()){renderMap();setRdy(false)}break;
     case'cd':if(isGuest())net.cd=performance.now()+3000;break;
-    case'cdx':if(isGuest())net.cd=0;break;
+    case'cdx':if(isGuest()){net.cd=0;net.going=false}break;
     case'ready':if(net.role==='host'){net.foeCh=net.pch;playVS(startOnline)}break;
     case'ver':onst('상대와 게임 버전이 달라요. 둘 다 새로고침해 주세요.');netClose();break;
     case'full':onst('그 방은 이미 대전 중이에요.');netClose();break;
-    case'go':if(!isGuest())return;net.cd=0;net.foeCh=net.pch=CH[m.ch]?m.ch:'shade';net.map=m.map==='cage'?'cage':'floor';ensureModels(netNeeds()).then(()=>{if(!net.conn)return;netSend({t:'ready'});playVS(startOnline)});break;
+    case'go':if(!isGuest())return;net.cd=0;net.going=true;if(CH[m.foe]&&m.foe!==set.ch){set.ch=m.foe;saveSet()}net.foeCh=net.pch=CH[m.ch]?m.ch:'shade';net.map=m.map==='cage'?'cage':'floor';ensureModels(netNeeds()).then(()=>{if(!net.conn)return;netSend({t:'ready'});playVS(startOnline)});break;
     case'i':if(net.role==='host')remoteIn(m);break;
     case's':if(isGuest()&&mode==='online')applySnap(m);break;
     case'bye':netLost();break;
@@ -1829,15 +1837,16 @@ function openRoom(){
   renderCh();renderMap();renderRdy();prepRoom();
 }
 function prepRoom(){const n=[],same=set.ch===net.pch,g=isGuest();if(set.ch==='seraph')n.push(same&&g?1:0);if(net.pch==='seraph')n.push(same&&!g?1:0);drawTiles();ensureModels(n,true).then(drawTiles)}
-function setRdy(r){if(net.rdy===r&&!r){hostCheckCd();return}net.rdy=r;netSend({t:'rdy',r});renderRdy();hostCheckCd()}
+function setRdy(r){if(net.going)return;if(net.rdy===r&&!r){hostCheckCd();return}net.rdy=r;netSend({t:'rdy',r});renderRdy();hostCheckCd()}
 function renderRdy(){$('selGo').querySelector('span').textContent=net.rdy?'준비 취소':'준비'}
 function hostCheckCd(){
   if(net.role!=='host')return;const both=net.rdy&&net.prdy&&inRoom()&&!!net.pch;
   if(both&&!net.cd){net.cd=performance.now()+3000;netSend({t:'cd'});sfx('ready')}else if(!both&&net.cd){net.cd=0;netSend({t:'cdx'})}
 }
 function roomTick(){
-  if(!inRoom()||net.role!=='host'||!net.cd||net.going||performance.now()<net.cd)return;
-  net.going=true;net.cd=0;net.foeCh=net.pch;ensureModels(netNeeds()).then(()=>{if(!net.conn){net.going=false;return}netSend({t:'go',ch:set.ch,map:net.map})});
+  if(!inRoom()||!net.cd||net.going||performance.now()<net.cd)return;
+  net.going=true;net.cd=0;if(net.role!=='host')return;
+  net.foeCh=net.pch;ensureModels(netNeeds()).then(()=>{if(!net.conn){net.going=false;return}netSend({t:'go',ch:set.ch,foe:net.foeCh,map:net.map})});
 }
 function netNeeds(){const n=[],same=set.ch===net.foeCh,g=isGuest();if(set.ch==='seraph')n.push(same&&g?1:0);if(net.foeCh==='seraph')n.push(same&&!g?1:0);return n}
 function startOnlineMatch(){
@@ -1923,7 +1932,7 @@ function openSelect(m){
 function prepSel(){const n=[];if(set.ch==='seraph')n.push(0);if(selMode==='fight'&&set.foe==='seraph')n.push(set.ch==='seraph'?1:0);drawTiles();ensureModels(n,true).then(drawTiles)}
 function drawTiles(){
   document.querySelectorAll('.tile[data-c]').forEach(b=>{
-    const c=b.querySelector('canvas'),x=c.getContext('2d'),ch=b.dataset.c;let pal=b.parentNode.id==='foeRow'&&ch===set.ch?1:0;
+    const c=b.querySelector('canvas'),x=c.getContext('2d'),ch=b.dataset.c,fr=b.parentNode.id==='foeRow';let pal=selMode==='room'?(fr?(!isGuest()&&ch===set.ch?1:0):(isGuest()&&ch===net.pch?1:0)):(fr&&ch===set.ch?1:0);
     x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);x.imageSmoothingEnabled=false;
     if(ch==='seraph'&&!srReady[pal])pal=0;if(ch==='seraph'&&!srReady[pal])return;
     const m=ch==='seraph'?(pal?SRM2:SRM).i0:(pal?SHM2:SHM).idle0,sc=ch==='seraph'?.62:1.25,Y=ch==='seraph'?c.height/2+82:c.height+48,sp=getSprite(m,16,1);if(!sp)return;
@@ -1989,11 +1998,11 @@ function renderUI(){
     if(!(selMode==='room'&&net.cd&&!vs)){ctx.save();ctx.translate(mid,VH*(vs?.42:.47));ctx.scale(pul,pul);skewText('VS',vp*2,vp*2,vp,'#5a0f16','center',null);skewText('VS',0,0,vp,'#ffd166','center','#07080c');ctx.restore()}
     if(vs&&t-vsT0<120){ctx.fillStyle=`rgba(255,255,255,${.6*(1-(t-vsT0)/120)})`;ctx.fillRect(0,0,VW,VH)}
     if(room&&!vs){
-      const bp=Math.max(2,Math.round(VH/110)),by=VH*.52;
+      const bp=Math.max(2,Math.round(VH/150)),by=VH*.56;
       for(const[x,r,al]of [[VW*.25,net.rdy,'center'],[VW*.75,net.prdy,'center']]){if(r){ctx.save();ctx.translate(x,by);skewText('READY',0,0,bp,'#ffd166','center','#07080c');ctx.restore()}}
-      const st=!net.pch?'상대를 기다리는 중…':net.cd?'곧 시작해요':net.prdy?(net.rdy?'':'상대 준비 완료 · 준비를 눌러주세요'):(net.rdy?'상대가 고르는 중…':'캐릭터를 고르고 준비를 눌러주세요');
-      if(st)ptext(st,VW/2,VH-Math.round(VH*.2),u,'#e8e8ee','center','#07080c');
-      if(net.cd){const n=Math.max(1,Math.ceil((net.cd-t)/1000)),cp=Math.max(4,Math.round(VH/30));ctx.save();ctx.translate(VW/2,VH*.36);skewText(String(n),0,0,cp,'#ffffff','center','#07080c');ctx.restore()}
+      const st=!net.pch?'상대를 기다리는 중…':net.going?'시작 준비 중…':net.cd?'곧 시작해요':net.prdy?(net.rdy?'':'상대 준비 완료 · 준비를 눌러주세요'):(net.rdy?'상대가 고르는 중…':'캐릭터를 고르고 준비를 눌러주세요');
+      if(st)ptext(st,VW/2,VH-Math.round(VH*.26),u,'#e8e8ee','center','#07080c');
+      if(net.cd){const n=Math.max(1,Math.ceil((net.cd-t)/1000)),cp=Math.max(3,Math.round(VH/64));ctx.save();ctx.translate(VW/2,VH*.4);skewText(String(n),0,0,cp,'#ffffff','center','#07080c');ctx.restore()}
     }
   }
 }
@@ -2027,7 +2036,7 @@ async function startGame(m){
   if(!guard){guard=true;addEventListener('beforeunload',e=>{e.preventDefault();e.returnValue=''})}
 }
 function modelNeeds(){const n=[];for(const F of mode==='train'?[pl]:[pl,en])if(isSer(F)){const p=skinOf(F);if(!srReady[p]&&!n.includes(p))n.push(p)}return n}
-function camPreset(){Object.assign(cam,isSer(pl)?{dist:8,h:4.2,side:0,fwd:2.2,pitch:18*DEG}:(mode!=='train'&&isSer(en))?{dist:4,h:1.9,side:.8,fwd:0,pitch:12*DEG}:{dist:2.8,h:1.45,side:1,fwd:0,pitch:12*DEG})}
+function camPreset(){Object.assign(cam,isSer(pl)?{dist:8,h:3.3,side:0,fwd:2,pitch:13*DEG}:(mode!=='train'&&isSer(en))?{dist:4,h:1.9,side:.8,fwd:0,pitch:12*DEG}:{dist:2.8,h:1.45,side:1,fwd:0,pitch:12*DEG})}
 let srChain=Promise.resolve();
 function ensureModels(need,quiet){const p=srChain.then(()=>bakeSer(need,quiet));srChain=p.catch(()=>{});return p}
 // ---- 구운 세라핌·오파님 도트를 브라우저(IndexedDB)에 저장 → 두 번째부터는 굽지 않고 바로 불러옴
@@ -2072,7 +2081,7 @@ function bakeOphPart(k,o){
 }
 // 브라우저는 사용자가 누르기 전에는 전체화면을 막음 → 전체화면이 아닐 때 아무 데나 누르면 바로 전체화면
 // (터치는 pointerdown이 아니라 손을 뗄 때만 허용돼서 pointerup·touchend·click에서 시도)
-function tryFull(e){audioInit();if(document.fullscreenElement||rebinding||(e.type==='keydown'&&e.code==='Escape'))return;goFull()}
+function tryFull(e){audioInit();if(document.fullscreenElement||rebinding||(e.type==='keydown'&&e.code==='Escape')||(e.target&&e.target.tagName==='INPUT'))return;goFull()}
 for(const t of ['pointerup','touchend','click','keydown'])addEventListener(t,tryFull,true);
 function goFull(){const d=document.documentElement;if(document.fullscreenElement||!d.requestFullscreen)return;d.requestFullscreen().then(()=>{try{if(usingTouch)screen.orientation.lock('landscape').catch(()=>{});else if(navigator.keyboard&&navigator.keyboard.lock)navigator.keyboard.lock().catch(()=>{})}catch(e){}},()=>{})}
 function stopInput(){for(const k in keys)keys[k]=false;pl.io.pend=[];stick.on=false;stick.x=stick.y=0;tps.clear();for(const b of TBTN)b.down=false}
@@ -2081,12 +2090,13 @@ function showResult(){running=false;stopInput();if(document.pointerLockElement)d
 function renderCh(){const f=selMode==='room'?net.pch:set.foe;document.querySelectorAll('#chRow .tile[data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===set.ch));document.querySelectorAll('#foeRow .tile[data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===f))}
 function renderMap(){const room=selMode==='room',m=room?net.map:set.map;document.querySelectorAll('#mapRow button').forEach(b=>b.classList.toggle('sel',b.dataset.m===m));$('mapRow').classList.toggle('dis',room&&!(net.role==='host'))}
 document.querySelectorAll('#mapRow button').forEach(b=>b.onclick=()=>{
-  const m=b.dataset.m;if(selMode==='room'){if(net.role!=='host'||net.map===m)return;net.map=m;netSend({t:'map',m});setRdy(false)}
+  const m=b.dataset.m;if(selMode==='room'){if(net.role!=='host'||net.map===m||net.going)return;net.map=m;netSend({t:'map',m});setRdy(false)}
   set.map=m;saveSet();sfx('ui');renderMap()});
 function renderDiff(){document.querySelectorAll('#diffRow button').forEach(b=>b.classList.toggle('sel',+b.dataset.d===diff))}
 diff=Math.max(0,Math.min(2,set.diff===undefined?1:set.diff));renderDiff();
 if(!CH[set.ch])set.ch='shade';if(!CH[set.foe])set.foe='shade';renderCh();
 document.querySelectorAll('#chRow .tile[data-c]').forEach(b=>b.onclick=()=>{if(set.ch!==b.dataset.c&&started&&!live())$('resume').style.display='none';set.ch=b.dataset.c;saveSet();renderCh();renderCtl();sfx('ui');if(selMode==='room'){netSend({t:'pick',ch:set.ch});setRdy(false);prepRoom()}else prepSel()});
+document.querySelectorAll('#chRow .tile[data-c]').forEach(b=>b.addEventListener('click',e=>{if(selMode==='room'&&net.going)e.stopImmediatePropagation()},true));
 document.querySelectorAll('#foeRow .tile[data-c]').forEach(b=>b.onclick=()=>{if(selMode==='room')return;if(set.foe!==b.dataset.c&&started&&mode==='fight')$('resume').style.display='none';set.foe=b.dataset.c;saveSet();renderCh();sfx('ui');prepSel()});
 document.querySelectorAll('#diffRow button').forEach(b=>b.onclick=()=>{diff=+b.dataset.d;set.diff=diff;saveSet();renderDiff()});
 $('goTrain').onclick=()=>openSelect('train');$('goFight').onclick=()=>openSelect('fight');$('resume').onclick=()=>startGame(null);
