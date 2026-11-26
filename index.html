@@ -1679,7 +1679,7 @@ $('aimB').onclick=()=>{set.aim=!set.aim;pl.aim=set.aim;saveSet();renderSet()};
 $('opts').onclick=()=>{openPanel('sset');renderSet()};
 $('sback').onclick=()=>closePanel('sset');
 // ---- 온라인 대전: PeerJS(WebRTC) 직접 연결, 방을 만든 쪽(호스트)이 게임을 계산하고 참가자는 입력만 보냄
-const NETV=8,CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PEER_PRE='ovrix-shade-';
+const NETV=9,CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PEER_PRE='ovrix-shade-';
 const net={foeCh:'shade',role:null,peer:null,conn:null,pc:null,nq:[],fx:[],lastIn:0,lastSnap:0,inStep:false,code:'',map:'floor',pch:null,rdy:false,prdy:false,cd:0,going:false};
 function isGuest(){return net.role==='guest'}
 function live(){return mode==='online'&&!!net.conn&&phase!=='match'}
