@@ -29,27 +29,77 @@ button.primary:hover{background:#d64650}
 input[type=range]{width:180px;accent-color:#c8323c}
 button.sel{background:#ffd166;color:#07080c}
 .lbl{font-size:12px;color:#9a9db0;align-self:center;margin-right:4px}
+.ov.scene{background:transparent;display:block}
+.ov.scene.hide{display:none}
+.abtn{position:relative;display:block;font:inherit;font-size:clamp(14px,2.6vh,22px);background:#0b0b10;color:#f4f2ea;border:0;border-left:6px solid #c8323c;padding:clamp(7px,1.4vh,12px) clamp(18px,3vh,30px);transform:skewX(-14deg);box-shadow:4px 4px 0 #000;cursor:pointer;text-align:left;min-width:clamp(170px,26vh,260px);transition:transform .08s,background .08s}
+.abtn>span{display:inline-block;transform:skewX(14deg)}
+.abtn:hover,.abtn:focus-visible{background:#c8323c;transform:skewX(-14deg) translateX(-8px);outline:none}
+.abtn:hover::before{content:'▶';position:absolute;left:-26px;top:50%;transform:translateY(-50%) skewX(14deg);color:#ffd166}
+.abtn.sm{font-size:clamp(11px,1.9vh,15px);min-width:clamp(130px,20vh,200px);border-left-color:#5a5f74;padding:clamp(5px,1vh,8px) clamp(14px,2.4vh,22px)}
+.abtn.sm:hover{background:#3a3e50}
+.abtn.go{background:#ffd166;color:#07080c;border-left-color:#c8323c;font-size:clamp(18px,4vh,34px);min-width:0;padding:clamp(6px,1.4vh,12px) clamp(26px,5vh,50px)}
+.abtn.go:hover{background:#fff1a8}
+#tbtns{position:absolute;right:clamp(16px,5vw,80px);top:50%;transform:translateY(-46%);display:flex;flex-direction:column;gap:clamp(6px,1.3vh,12px);align-items:flex-end}
+#tbtns .gap{height:clamp(4px,1.5vh,14px)}
+#tfoot{position:absolute;left:12px;bottom:8px;font-size:11px;color:#6f7286}
+#selBack{position:absolute;left:clamp(10px,2vw,24px);top:clamp(8px,1.6vh,16px)}
+#selMode{position:absolute;left:50%;top:clamp(10px,2vh,20px);transform:translateX(-50%) skewX(-14deg);background:#0b0b10;color:#ffd166;padding:4px 18px;font-size:clamp(12px,2vh,16px);box-shadow:3px 3px 0 #000;white-space:nowrap}
+.side{position:absolute;bottom:clamp(10px,2.4vh,26px);display:flex;flex-direction:column;gap:6px}
+.side.p1{left:clamp(10px,2vw,28px);align-items:flex-start}.side.p2{right:clamp(10px,2vw,28px);align-items:flex-end}
+.tag{font-size:clamp(14px,2.4vh,20px);padding:2px 12px;transform:skewX(-14deg);box-shadow:3px 3px 0 #000}
+.p1 .tag{background:#c8323c}.p2 .tag{background:#2f6bd6}
+.tiles{gap:6px}
+.tile{width:clamp(52px,10vh,84px);height:clamp(52px,10vh,84px);padding:0;position:relative;background:#0b0b10;border:3px solid #3a3e50;box-shadow:3px 3px 0 #000;overflow:hidden;display:flex;align-items:flex-end;justify-content:center}
+.tile canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.tile b{position:relative;font-weight:normal;font-size:clamp(10px,1.6vh,12px);background:rgba(7,8,12,.75);width:100%;text-align:center;padding:1px 0}
+.tile.sel{color:#f4f2ea}.p1 .tile.sel{border-color:#ff4b55;background:#3a0a11}.p2 .tile.sel{border-color:#5aa0ff;background:#0c1a3a}
+.tile.lock{color:#3a3e50;font-size:clamp(20px,4vh,32px);align-items:center;cursor:default}
+.tile:hover:not(.lock){border-color:#ffd166}
+#diffRow button{font-size:11px;padding:5px 10px}
+#selGo{position:absolute;left:50%;bottom:clamp(12px,3vh,30px);transform:translateX(-50%) skewX(-14deg)}
+#selGo:hover{transform:translateX(-50%) skewX(-14deg) scale(1.05)}
+#selGo:hover::before{display:none}
+.panel{border-color:#07080c;box-shadow:0 0 0 4px #c8323c,8px 8px 0 4px #000}
+.col{display:flex;flex-direction:column;gap:8px}
 #code{font:inherit;font-size:16px;background:#0e1016;color:#e8e8ee;border:3px solid #07080c;border-radius:0;box-shadow:inset 3px 3px 0 rgba(0,0,0,.4);padding:7px 10px;width:150px;text-transform:uppercase;outline:none}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="load" class="ov"><div class="panel"><h1>불러오는 중</h1><p class="sub" id="loadt">셰이드 도트 만드는 중…</p></div></div>
-<div id="menu" class="ov hide"><div class="panel">
-<h1>셰이드</h1>
-<p class="sub">프로토타입 · 허수아비 훈련과 AI 대전</p>
+<div id="menu" class="ov hide scene">
+<div id="tbtns">
+<button class="abtn" id="goFight"><span>AI 대전</span></button>
+<button class="abtn" id="goOnline"><span>온라인 대전</span></button>
+<button class="abtn" id="goTrain"><span>허수아비 훈련</span></button>
+<div class="gap"></div>
+<button class="abtn sm" id="help"><span>조작법</span></button>
+<button class="abtn sm" id="opts"><span>설정</span></button>
+<button class="abtn sm" id="keys"><span>키 설정</span></button>
+</div>
+<div id="tfoot">프로토타입</div>
+</div>
+<div id="select" class="ov hide scene">
+<button class="abtn sm" id="selBack"><span>◀ 뒤로</span></button>
+<div id="selMode"></div>
+<div class="side p1"><div class="tag">1P</div><div class="row tiles" id="chRow"><button class="tile" data-c="shade"><canvas width="72" height="72"></canvas><b>셰이드</b></button><button class="tile" data-c="seraph"><canvas width="72" height="72"></canvas><b>세라핌</b></button><div class="tile lock">?</div><div class="tile lock">?</div></div></div>
+<div class="side p2"><div class="tag" id="p2tag">CPU</div><div class="row" id="diffRow"><span class="lbl">난이도</span><button data-d="0">쉬움</button><button data-d="1">보통</button><button data-d="2">어려움</button></div><div class="row tiles" id="foeRow"><div class="tile lock">?</div><div class="tile lock">?</div><button class="tile" data-c="shade"><canvas width="72" height="72"></canvas><b>셰이드</b></button><button class="tile" data-c="seraph"><canvas width="72" height="72"></canvas><b>세라핌</b></button></div></div>
+<button class="abtn go" id="selGo"><span>FIGHT!</span></button>
+</div>
+<div id="pausep" class="ov hide"><div class="panel" style="max-width:340px">
+<h1>일시정지</h1>
+<div class="col"><button class="primary" id="resume">계속하기</button><button id="pHelp">조작법</button><button id="pOpts">설정</button><button id="pKeys">키 설정</button><button id="toTitle">메인 화면으로</button></div>
+</div></div>
+<div id="helpP" class="ov hide"><div class="panel">
+<h1 id="helpT">조작법</h1>
 <table id="ctl"></table>
-<div class="row" id="chRow"><span class="lbl">내 캐릭터</span><button data-c="shade">셰이드</button><button data-c="seraph">세라핌</button></div>
-<div class="row" id="foeRow"><span class="lbl">AI 상대</span><button data-c="shade">셰이드</button><button data-c="seraph">세라핌</button></div>
-<div class="row" id="diffRow"><span class="lbl">AI 난이도</span><button data-d="0">쉬움</button><button data-d="1">보통</button><button data-d="2">어려움</button></div>
-<div class="row" style="margin-top:12px"><button class="primary" id="goTrain">허수아비 훈련</button><button class="primary" id="goFight">AI 대전 (3판 2선승)</button><button class="primary" id="goOnline">온라인 대전</button><button id="resume" style="display:none">계속하기</button></div>
-<div class="row" style="margin-top:10px"><button id="opts">설정</button><button id="keys">키 설정</button></div>
 <p class="note" id="note"></p>
+<div class="row"><button class="primary" id="hback">닫기</button></div>
 </div></div>
 <div id="result" class="ov hide"><div class="panel">
 <h1 id="resT"></h1>
 <p class="sub" id="resS"></p>
-<div class="row"><button class="primary" id="again">다시하기</button><button id="toMenu">메뉴로</button></div>
+<div class="row"><button class="primary" id="again">다시하기</button><button id="toMenu">메인 화면</button></div>
 </div></div>
 <div id="onl" class="ov hide"><div class="panel">
 <h1>온라인 대전</h1>
@@ -1076,6 +1126,7 @@ function render(){
   mctx.setTransform(1,0,0,1,0,0);mctx.imageSmoothingEnabled=false;mctx.filter='none';
   mctx.fillStyle='#12141b';mctx.fillRect(0,0,VW,VH);
   if(!DUM)return;
+  if(uiScene){renderUI();return}
   camSetup();ensureBG();
   const shx=shake>0?(Math.random()-.5)*shake*DPR:0,shy=shake>0?(Math.random()-.5)*shake*DPR:0;
   bctx.setTransform(1,0,0,1,0,0);bctx.drawImage(SKY,0,Math.round((VH/2-Math.tan(C.pitch)*C.foc)/PXS-skyHZ));
@@ -1146,8 +1197,8 @@ $('sens').oninput=e=>{set.sens=+e.target.value;saveSet();renderSet()};
 $('vol').oninput=e=>{set.vol=+e.target.value;saveSet();renderSet();audioInit();if(MG)MG.gain.value=set.vol};
 $('vol').onchange=()=>sfx('hitH');
 $('aimB').onclick=()=>{set.aim=!set.aim;pl.aim=set.aim;saveSet();renderSet()};
-$('opts').onclick=()=>{$('menu').classList.add('hide');$('sset').classList.remove('hide');renderSet()};
-$('sback').onclick=()=>{$('sset').classList.add('hide');$('menu').classList.remove('hide')};
+$('opts').onclick=()=>{openPanel('sset');renderSet()};
+$('sback').onclick=()=>closePanel('sset');
 // ---- 온라인 대전: PeerJS(WebRTC) 직접 연결, 방을 만든 쪽(호스트)이 게임을 계산하고 참가자는 입력만 보냄
 const NETV=4,CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PEER_PRE='ovrix-shade-';
 const net={foeCh:'shade',role:null,peer:null,conn:null,pc:null,again:false,peerAgain:false,nq:[],fx:[],lastIn:0,lastSnap:0,inStep:false};
@@ -1267,22 +1318,106 @@ function guestStep(){
   lb=(pl.atk==='ult'||en.atk==='ult')?Math.min(1,lb+.08):Math.max(0,lb-.05);
 }
 addEventListener('pagehide',()=>{if(net.conn){netSend({t:'bye'});netClose()}});
-$('goOnline').onclick=()=>{menuEl.classList.add('hide');$('onl').classList.remove('hide');if(!net.role){onst('');$('roomBox').style.display='none'}};
-$('oback').onclick=()=>{if(!live())netClose();$('onl').classList.add('hide');renderCtl();menuEl.classList.remove('hide')};
+$('goOnline').onclick=()=>openSelect('online');
+$('oback').onclick=()=>{if(!live())netClose();$('onl').classList.add('hide');openSelect('online')};
 $('mkRoom').onclick=()=>netHost();
 $('join').onclick=()=>netJoin($('code').value);
 $('code').addEventListener('keydown',e=>{if(e.key==='Enter')netJoin($('code').value)});
 
 const menuEl=$('menu'),ksEl=$('kset'),ctlEl=$('ctl'),ktab=$('ktab');
 let rebinding=null,lockErrs=0,hadLock=false,guard=false;
+// ---- 메인 화면 · 캐릭터 선택 · VS (아케이드 스타일, 실제 도트 캐릭터)
+const CHI={shade:{n:'셰이드',d:'후드 복서 · 근접 콤보'},seraph:{n:'세라핌',d:'여섯 날개 · 비행 · 원거리'},dummy:{n:'허수아비',d:'훈련용 · 가만히 서 있어요'},online:{n:'?',d:'온라인 상대'}};
+let uiScene=null,selMode='fight',vsT0=0;
+function uiFoe(){return selMode==='train'?'dummy':selMode==='online'?'online':set.foe}
+function hideAllUI(){for(const k of ['menu','select','pausep','helpP','sset','kset','onl','result'])$(k).classList.add('hide')}
+function showTitle(){hideAllUI();uiScene='title';menuEl.classList.remove('hide');ensureModels([0],true)}
+function openSelect(m){
+  selMode=m;hideAllUI();uiScene='select';$('select').classList.remove('hide');
+  $('selMode').textContent=m==='train'?'허수아비 훈련':m==='online'?'온라인 대전':'AI 대전 · 3판 2선승';
+  $('p2tag').textContent=m==='fight'?'CPU':m==='online'?'2P':'훈련';
+  $('foeRow').style.display=$('diffRow').style.display=m==='fight'?'':'none';
+  $('selGo').querySelector('span').textContent=m==='online'?'방 찾기':m==='train'?'시작':'FIGHT!';
+  renderCh();renderDiff();prepSel();
+}
+function prepSel(){const n=[];if(set.ch==='seraph')n.push(0);if(selMode==='fight'&&set.foe==='seraph')n.push(set.ch==='seraph'?1:0);drawTiles();ensureModels(n,true).then(drawTiles)}
+function drawTiles(){
+  document.querySelectorAll('.tile[data-c]').forEach(b=>{
+    const c=b.querySelector('canvas'),x=c.getContext('2d'),ch=b.dataset.c;let pal=b.parentNode.id==='foeRow'&&ch===set.ch?1:0;
+    x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);x.imageSmoothingEnabled=false;
+    if(ch==='seraph'&&!srReady[pal])pal=0;if(ch==='seraph'&&!srReady[pal])return;
+    const m=ch==='seraph'?(pal?SRM2:SRM).i0:(pal?SHM2:SHM).idle0,sc=ch==='seraph'?.62:1.25,Y=ch==='seraph'?c.height/2+82:c.height+48,sp=getSprite(m,16,1);if(!sp)return;
+    x.drawImage(sp.c,Math.round(c.width/2-sp.ax*sc),Math.round(Y-sp.ay*sc),Math.round(sp.c.width*sc),Math.round(sp.c.height*sc));
+  });
+}
+function drawUIModel(ch,pal,di,pi,X,Y,h,t){
+  if(ch==='seraph'){
+    if(!srReady[pal])return false;const pose='i'+(Math.floor(t/83)%12),m=(pal?SRM2:SRM)[pose],sc=h/245;
+    drawSprite(getSprite(m,di,pi),X,Y,sc,{});
+    let d=((di-16)%32+32)%32;if(d>16)d=32-d;
+    if(d<=7){const EP=EYEP[pal],bob=2*SPOSES[pose].bob,dy=-bob*Math.cos((pi?pi*10:3)*DEG)*sc,bt=Math.floor(t/16)%230,lid=bt<8?(bt<2||bt>=6?'lh':'lc'):null;
+      for(const k of ['l0',lid])if(k&&EP[k])drawSprite(getSprite(EP[k],di,pi),X,Y+dy,sc,{})}
+    return true;
+  }
+  if(ch==='dummy'){drawSprite(getSprite(DUM,di,pi),X,Y,h/96,{});return true}
+  if(ch==='online')return false;
+  drawSprite(getSprite((pal?SHM2:SHM)[Math.floor(t/600)%2?'idle1':'idle0'],di,pi),X,Y,h/90,{});return true;
+}
+function uiPoly(pts,col){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(const p of pts.slice(1))ctx.lineTo(p[0],p[1]);ctx.closePath();ctx.fill()}
+function uiShadow(x,y,rx,ry){ctx.fillStyle='rgba(0,0,0,.45)';const n=Math.max(2,Math.round(ry/2));for(let i=-n;i<=n;i++){const w=rx*Math.sqrt(1-(i/n)**2);ctx.fillRect(Math.round(x-w),Math.round(y+i*ry/n),Math.round(2*w),Math.ceil(ry/n)+1)}}
+function skewText(t,x,y,px,col,align,ol,sk){ctx.save();ctx.translate(x,y);ctx.transform(1,0,-(sk===undefined?.2:sk),1,0,0);ptext(t,0,0,px,col,align,ol);ctx.restore()}
+function uiStripes(x0,x1,col,t,step){ctx.fillStyle=col;const off=(t*.04)%step;for(let x=x0-VH-step+off;x<x1;x+=step){ctx.beginPath();ctx.moveTo(x,VH);ctx.lineTo(x+VH*.45,0);ctx.lineTo(x+VH*.45+step*.42,0);ctx.lineTo(x+step*.42,VH);ctx.closePath();ctx.fill()}}
+function renderUI(){
+  const t=performance.now(),u=UPX();ctx=mctx;ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;
+  ctx.fillStyle='#09090d';ctx.fillRect(0,0,VW,VH);
+  if(uiScene==='title'){
+    const ex=VW*.6,ex2=VW*.4;
+    ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(ex,0);ctx.lineTo(ex2,VH);ctx.lineTo(0,VH);ctx.closePath();ctx.clip();
+    ctx.fillStyle='#24080d';ctx.fillRect(0,0,VW,VH);uiStripes(0,VW,'#2e0b11',t,26*u);ctx.restore();
+    uiPoly([[ex,0],[ex+14*u,0],[ex2+14*u,VH],[ex2,VH]],'#c8323c');uiPoly([[ex+20*u,0],[ex+24*u,0],[ex2+24*u,VH],[ex2+20*u,VH]],'#ffd166');
+    for(let gy=0;gy<VH;gy+=10*u)for(let gx=0;gx<VW*.22;gx+=10*u){const ex3=ex+(ex2-ex)*gy/VH+30*u+gx,s=Math.round((1-gx/(VW*.22))*3.5*u);if(s>0){ctx.fillStyle='rgba(200,50,60,.28)';ctx.fillRect(ex3,gy,s,s)}}
+    for(let i=0;i<16;i++){const y=((i*137+t*.25)%(VH+200))-100,x=VW*.62+((i*211)%Math.round(VW*.36));ctx.fillStyle='rgba(255,255,255,.05)';ctx.fillRect(x,y,Math.round(VW*.12),u)}
+    const sd=(16+Math.floor(t/240))%32,hd=(16+Math.floor(t/200))%32;
+    if(drawUIModel('seraph',0,sd,1,VW*.74,VH*1.04,VH*1.02,t))uiShadow(VW*.74,VH*.98,VH*.22,VH*.03);
+    uiShadow(VW*.25,VH*.93,VH*.09,VH*.018);drawUIModel('shade',0,hd,1,VW*.25,VH*.93,VH*.6,t);
+    const lp=Math.max(2,Math.round(VH/62));
+    skewText('OVRIX',VW*.05+lp*2,VH*.07+lp*2,lp,'#5a0f16','left',null);
+    skewText('OVRIX',VW*.05,VH*.07,lp,'#f4f2ea','left','#07080c');
+    ctx.save();ctx.beginPath();ctx.rect(0,VH*.07+lp*6.2,VW,lp*7);ctx.clip();skewText('OVRIX',VW*.05,VH*.07,lp,'#ff4b55','left',null);ctx.restore();
+    const sx=((t/7)%(VW*1.6))-VW*.3;ctx.save();ctx.beginPath();ctx.moveTo(sx,0);ctx.lineTo(sx+lp*5,0);ctx.lineTo(sx-lp*6,VH);ctx.lineTo(sx-lp*11,VH);ctx.closePath();ctx.clip();skewText('OVRIX',VW*.05,VH*.07,lp,'rgba(255,255,255,.9)','left',null);ctx.restore();
+    skewText('3D 도트 대전 격투',VW*.05+lp*1.5,VH*.07+lp*15,Math.max(u,Math.round(lp/4)),'#ffd166','left','#07080c');
+    if(!srReady[0])ptext('세라핌 불러오는 중…',VW-12*u,VH-20*u,u,'#9a9db0','right','#07080c');
+    return;
+  }
+  if(uiScene==='select'||uiScene==='vs'){
+    const vs=uiScene==='vs',k=vs?Math.min(1,(t-vsT0)/260):1,foe=uiFoe(),mid=VW*.5,sl=VW*.06;
+    const p2c=foe==='dummy'?['#2a1d08','#33240b']:foe==='online'?['#18181d','#1f1f26']:['#0c1a3a','#10224a'];
+    ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(mid+sl,0);ctx.lineTo(mid-sl,VH);ctx.lineTo(0,VH);ctx.closePath();ctx.clip();ctx.fillStyle='#3a0a11';ctx.fillRect(0,0,VW,VH);uiStripes(0,VW,'#470d15',t,30*u);ctx.restore();
+    ctx.save();ctx.beginPath();ctx.moveTo(mid+sl,0);ctx.lineTo(VW,0);ctx.lineTo(VW,VH);ctx.lineTo(mid-sl,VH);ctx.closePath();ctx.clip();ctx.fillStyle=p2c[0];ctx.fillRect(0,0,VW,VH);uiStripes(0,VW,p2c[1],-t,30*u);ctx.restore();
+    uiPoly([[mid+sl-5*u,0],[mid+sl+5*u,0],[mid-sl+5*u,VH],[mid-sl-5*u,VH]],'#f4f2ea');
+    const p1=set.ch,p1h=p1==='seraph'?VH*.92:VH*.66,p1y=p1==='seraph'?VH*1.0:VH*.9,off=(1-k)*VW*.4;
+    if(p1!=='seraph')uiShadow(VW*.25-off,VH*.9,VH*.1,VH*.02);
+    if(!drawUIModel(p1,0,12+Math.round(Math.sin(t/900)),1,VW*.25-off,p1y,p1h,t))ptext('불러오는 중…',VW*.25,VH*.5,u,'#e8e8ee','center','#07080c');
+    const p2pal=(selMode==='fight'&&foe===set.ch)?1:0,p2h=foe==='seraph'?VH*.92:foe==='dummy'?VH*.62:VH*.66,p2y=foe==='seraph'?VH*1.0:VH*.9;
+    if(foe==='online')skewText('?',VW*.75,VH*.3,Math.round(VH/40),'#e8e8ee','center','#07080c');
+    else{if(foe!=='seraph')uiShadow(VW*.75+off,VH*.9,VH*.1,VH*.02);if(!drawUIModel(foe,p2pal,20+Math.round(Math.sin(t/900+1)),1,VW*.75+off,p2y,p2h,t))ptext('불러오는 중…',VW*.75,VH*.5,u,'#e8e8ee','center','#07080c')}
+    const np=Math.max(2,Math.round(VH/90)),ny=vs?VH*.7:VH*.13;
+    skewText(CHI[p1].n,VW*.04-off,ny,np,'#f4f2ea','left','#07080c');ptext(CHI[p1].d,VW*.04+np*2-off,ny+np*14,u,'#ffd166','left','#07080c');
+    skewText(CHI[foe].n,VW*.96+off,ny,np,'#f4f2ea','right','#07080c');ptext(CHI[foe].d,VW*.96-np*2+off,ny+np*14,u,'#9fd3ff','right','#07080c');
+    const vp=Math.max(3,Math.round(VH/(vs?34:60))),pul=vs?1+Math.max(0,1-(t-vsT0)/180)*1.5:1+.04*Math.sin(t/160);
+    ctx.save();ctx.translate(mid,VH*(vs?.42:.47));ctx.scale(pul,pul);skewText('VS',vp*2,vp*2,vp,'#5a0f16','center',null);skewText('VS',0,0,vp,'#ffd166','center','#07080c');ctx.restore();
+    if(vs&&t-vsT0<120){ctx.fillStyle=`rgba(255,255,255,${.6*(1-(t-vsT0)/120)})`;ctx.fillRect(0,0,VW,VH)}
+  }
+}
+function playVS(cb){hideAllUI();uiScene='vs';vsT0=performance.now();sfx('ult');setTimeout(cb,1400)}
 function renderCtl(){
   const ser=set.ch==='seraph';
   const rows=ser?(usingTouch?[['이동','왼쪽 화면을 끌기'],['막기','스틱을 뒤로 당기기 (날개로 감싸서 모든 높이를 막아요)'],['날기','날기 버튼을 누르고 있기 (최대 1.5 m)'],['내려가기','날기 버튼 떼기 또는 하강 버튼'],['날개치기','날개 버튼'],['눈 레이저','레이저 버튼 · 모았다가 가슴 높이로 발사 (앉거나 옆으로 달리면 피함)'],['빛기둥','빛기둥 버튼 · 상대 발밑에 표시되고 0.8초 뒤 떨어져요 (못 막음)'],['날개 판정','날개에 맞으면 덜 아프지만, 쌓이면 5초 동안 못 날아요'],['궁극기','다음 업데이트 (오파님)'],['카메라','오른쪽 화면을 끌기'],['멈춤','위쪽 가운데 II 버튼']]
     :[['이동',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')}`],['달리기',kl('run')],['날기',`${kl('jump')} 누르고 있기 (최대 1.5 m)`],['내려가기',`${kl('jump')} 떼기 또는 ${kl('crouch')}`],['막기',`뒤로 이동 (${kl('back')}) · 날개로 감싸서 모든 높이를 막아요`],['날개치기','좌클릭'],['눈 레이저','우클릭 · 모았다가 가슴 높이로 발사 (앉거나 옆으로 달리면 피함)'],['빛기둥','좌클릭+우클릭 · 상대 발밑에 표시되고 0.8초 뒤 떨어져요 (못 막음)'],['날개 판정','날개에 맞으면 덜 아프지만, 쌓이면 5초 동안 못 날아요'],['궁극기','다음 업데이트 (오파님)'],['카메라','마우스']])
     :usingTouch?[['이동','왼쪽 화면을 끌기'],['달리기','스틱을 끝까지 밀기'],['막기','스틱을 뒤로 당기기'],['앉아서 이동·공격','앉기를 누른 채로 (하단 공격)'],['앉아 막기','앉기+스틱 뒤로 (하단은 앉아서 막기)'],['카메라','오른쪽 화면을 끌기'],['잽 / 강 / 차기','버튼'],['어퍼컷','어퍼 버튼'],['날라차기','점프 중 차기 버튼'],['점프 / 대시 / 앉기','버튼 (앉기는 누르고 있기)'],['궁극기','궁극 버튼 (체력 30% 이하)'],['멈춤','위쪽 가운데 II 버튼']]
     :[['이동',`${kl('fwd')} ${kl('left')} ${kl('back')} ${kl('right')}`],['달리기',kl('run')],['앉기',kl('crouch')],['점프',kl('jump')],['막기',`뒤로 이동 (${kl('back')})`],['앉아서 공격',`${kl('crouch')}+공격 = 하단 공격`],['앉아 막기',`${kl('crouch')}+${kl('back')} (하단은 앉아서만 막혀요)`],['대시','이동 키 두 번'],['잽 (약공격)','좌클릭'],['스트레이트 (강공격)','우클릭'],['앞차기','좌클릭+우클릭'],['어퍼컷','점프+우클릭 (동시에)'],['공중 스트레이트','점프 중 우클릭'],['날라차기','점프 중 좌클릭+우클릭'],['궁극기',`${kl('back')}→${kl('right')}→${kl('fwd')}→우클릭 (체력 30% 이하)`],['카메라','마우스']];
-  ctlEl.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
-  $('keys').style.display=usingTouch?'none':'';
+  ctlEl.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');$('helpT').textContent=`조작법 · ${CH[set.ch].n}`;
+  $('keys').style.display=$('pKeys').style.display=usingTouch?'none':'';
   $('note').textContent=usingTouch?'가로 화면으로 해주세요. 전체화면을 지원하는 브라우저에서는 시작할 때 전체화면으로 바뀌어요.':'시작하면 전체화면으로 바뀌고 마우스가 화면에 고정돼요. 크롬·엣지 전체화면에서는 Ctrl+W를 눌러도 탭이 닫히지 않아요. Esc를 누르면 이 메뉴로 돌아와요.';
 }
 function renderKeys(){
@@ -1293,11 +1428,11 @@ function requestLock(){if(document.pointerLockElement===cv)return;try{const p=cv
 async function startGame(m){
   if(m&&m!=='online')netClose();
   if(m){pl.ch=set.ch;if(m==='fight')en.ch=set.foe;else if(m==='online')en.ch=net.foeCh||'shade';pl.max=CH[pl.ch].hp;en.max=CH[en.ch].hp;mode=m;
-    const need=modelNeeds();if(need.length){menuEl.classList.add('hide');$('result').classList.add('hide');try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}await ensureModels(need)}
+    const need=modelNeeds();if(need.length){hideAllUI();if(need.some(p=>!srReady[p]))$('load').classList.remove('hide');try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}await ensureModels(need);$('load').classList.add('hide')}
     if(m==='fight')newMatch();else if(m==='train')resetTrain();else startOnlineMatch();camPreset()}
   en.isAI=mode==='fight';$('again').style.display='';
   pl.aim=!!set.aim;
-  menuEl.classList.add('hide');$('result').classList.add('hide');running=true;started=true;last=performance.now();acc=0;audioInit();
+  hideAllUI();uiScene=null;running=true;started=true;last=performance.now();acc=0;audioInit();
   try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen()}catch(e){}
   if(usingTouch){try{await screen.orientation.lock('landscape')}catch(e){}}
   else{try{if(navigator.keyboard&&navigator.keyboard.lock)await navigator.keyboard.lock()}catch(e){}requestLock()}
@@ -1305,34 +1440,44 @@ async function startGame(m){
 }
 function modelNeeds(){const n=[];for(const F of mode==='train'?[pl]:[pl,en])if(isSer(F)){const p=skinOf(F);if(!srReady[p]&&!n.includes(p))n.push(p)}return n}
 function camPreset(){Object.assign(cam,isSer(pl)?{dist:8,h:4.2,side:0,fwd:2.2,pitch:18*DEG}:(mode!=='train'&&isSer(en))?{dist:4,h:1.9,side:.8,fwd:0,pitch:12*DEG}:{dist:2.8,h:1.45,side:1,fwd:0,pitch:12*DEG})}
-function ensureModels(need){
+let srChain=Promise.resolve();
+function ensureModels(need,quiet){const p=srChain.then(()=>bakeSer(need,quiet));srChain=p.catch(()=>{});return p}
+function bakeSer(need,quiet){
   need=need.filter(p=>!srReady[p]);if(!need.length)return Promise.resolve();
   return new Promise(res=>{
-    $('load').classList.remove('hide');const ks=[...Object.keys(SPOSES),...EYEK.map(e=>'@'+e[0])];let pi=0,ki=0;
+    if(!quiet)$('load').classList.remove('hide');const ks=[...Object.keys(SPOSES),...EYEK.map(e=>'@'+e[0])];let pi=0,ki=0;
     if(!SR_G.M)SR_G.M=new Int32Array(SR_G.W*SR_G.D*SR_G.H);
     if(!SCRB)initScratch([{R:Math.ceil(Math.hypot(174,92)),H:SR_G.H}],true);
     const run=()=>{const t0=performance.now();
       while(pi<need.length&&performance.now()-t0<40){const p=need[pi],k=ks[ki++],o=p?SP2:SP1;if(k[0]==='@'){const e=EYEK.find(q=>'@'+q[0]===k);EYEP[p][e[0]]=buildEyePart(o,e[0],e[1])}else{buildSeraph(SR_G,o,SPOSES[k]);const m=bake(SR_G,173,90,new Set([o.glint,o.ember,o.glow]));m.big=true;(p?SRM2:SRM)[k]=m}if(ki>=ks.length){srReady[p]=true;pi++;ki=0}}
       $('loadt').textContent=`세라핌 도트 만드는 중… ${Math.round((pi*ks.length+ki)/(need.length*ks.length)*100)}%`;
       if(pi<need.length){setTimeout(run,0);return}
-      SR_G.M=null;$('load').classList.add('hide');res()};
+      SR_G.M=null;if(!quiet)$('load').classList.add('hide');res()};
     $('loadt').textContent='세라핌 도트 만드는 중… 0%';setTimeout(run,30)})}
 function goFull(){const d=document.documentElement;if(document.fullscreenElement||!d.requestFullscreen)return;d.requestFullscreen().then(()=>{try{if(usingTouch)screen.orientation.lock('landscape').catch(()=>{});else if(navigator.keyboard&&navigator.keyboard.lock)navigator.keyboard.lock().catch(()=>{})}catch(e){}},()=>{})}
 function stopInput(){for(const k in keys)keys[k]=false;pl.io.pend=[];stick.on=false;stick.x=stick.y=0;tps.clear();for(const b of TBTN)b.down=false}
-function pause(){running=false;stopInput();if(document.pointerLockElement)document.exitPointerLock();$('resume').style.display=phase==='match'?'none':'';renderCtl();menuEl.classList.remove('hide')}
+function pause(){running=false;stopInput();if(document.pointerLockElement)document.exitPointerLock();$('resume').style.display=phase==='match'?'none':'';renderCtl();hideAllUI();$('pausep').classList.remove('hide')}
 function showResult(){running=false;stopInput();if(document.pointerLockElement)document.exitPointerLock();menuEl.classList.add('hide');$('again').style.display='';$('resT').textContent=winner===0?'승리!':'패배…';$('resS').textContent=mode==='online'?`${wins[0]} : ${wins[1]} · 온라인 대전`:`${wins[0]} : ${wins[1]} · AI 난이도 ${DIFF[diff].n}`;$('resume').style.display='none';$('result').classList.remove('hide')}
-function renderCh(){document.querySelectorAll('#chRow button').forEach(b=>b.classList.toggle('sel',b.dataset.c===set.ch));document.querySelectorAll('#foeRow button').forEach(b=>b.classList.toggle('sel',b.dataset.c===set.foe))}
+function renderCh(){document.querySelectorAll('#chRow .tile[data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===set.ch));document.querySelectorAll('#foeRow .tile[data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===set.foe))}
 function renderDiff(){document.querySelectorAll('#diffRow button').forEach(b=>b.classList.toggle('sel',+b.dataset.d===diff))}
 diff=Math.max(0,Math.min(2,set.diff===undefined?1:set.diff));renderDiff();
 if(!CH[set.ch])set.ch='shade';if(!CH[set.foe])set.foe='shade';renderCh();
-document.querySelectorAll('#chRow button').forEach(b=>b.onclick=()=>{if(set.ch!==b.dataset.c&&started&&!live())$('resume').style.display='none';set.ch=b.dataset.c;saveSet();renderCh();renderCtl()});
-document.querySelectorAll('#foeRow button').forEach(b=>b.onclick=()=>{if(set.foe!==b.dataset.c&&started&&mode==='fight')$('resume').style.display='none';set.foe=b.dataset.c;saveSet();renderCh()});
+document.querySelectorAll('#chRow .tile[data-c]').forEach(b=>b.onclick=()=>{if(set.ch!==b.dataset.c&&started&&!live())$('resume').style.display='none';set.ch=b.dataset.c;saveSet();renderCh();renderCtl();sfx('ui');prepSel()});
+document.querySelectorAll('#foeRow .tile[data-c]').forEach(b=>b.onclick=()=>{if(set.foe!==b.dataset.c&&started&&mode==='fight')$('resume').style.display='none';set.foe=b.dataset.c;saveSet();renderCh();sfx('ui');prepSel()});
 document.querySelectorAll('#diffRow button').forEach(b=>b.onclick=()=>{diff=+b.dataset.d;set.diff=diff;saveSet();renderDiff()});
-$('goTrain').onclick=()=>startGame('train');$('goFight').onclick=()=>startGame('fight');$('resume').onclick=()=>startGame(null);
+$('goTrain').onclick=()=>openSelect('train');$('goFight').onclick=()=>openSelect('fight');$('resume').onclick=()=>startGame(null);
+$('selBack').onclick=()=>showTitle();
+$('selGo').onclick=()=>{if(selMode==='train')startGame('train');else if(selMode==='fight')playVS(()=>startGame('fight'));else{$('select').classList.add('hide');$('onl').classList.remove('hide');if(!net.role){onst('');$('roomBox').style.display='none'}}};
+$('toTitle').onclick=()=>{if(mode==='online')netClose();showTitle()};
+let uiPrev='menu';
+function openPanel(id){uiPrev=['menu','pausep','select'].find(k=>!$(k).classList.contains('hide'))||uiPrev;$(uiPrev).classList.add('hide');$(id).classList.remove('hide')}
+function closePanel(id){$(id).classList.add('hide');$(uiPrev).classList.remove('hide')}
+$('help').onclick=$('pHelp').onclick=()=>{renderCtl();openPanel('helpP')};$('hback').onclick=()=>closePanel('helpP');
+$('pOpts').onclick=()=>{openPanel('sset');renderSet()};$('pKeys').onclick=()=>{openPanel('kset');renderKeys()};
 $('again').onclick=()=>{if(mode!=='online'){startGame('fight');return}if(!net.conn)return;net.again=true;netSend({t:'again'});$('resS').textContent='상대를 기다리는 중…';tryAgain()};
-$('toMenu').onclick=()=>{if(mode==='online')netClose();$('result').classList.add('hide');renderCtl();menuEl.classList.remove('hide')};
-$('keys').onclick=()=>{menuEl.classList.add('hide');ksEl.classList.remove('hide');renderKeys()};
-$('kback').onclick=()=>{rebinding=null;ksEl.classList.add('hide');renderCtl();menuEl.classList.remove('hide')};
+$('toMenu').onclick=()=>{if(mode==='online')netClose();showTitle()};
+$('keys').onclick=()=>{openPanel('kset');renderKeys()};
+$('kback').onclick=()=>{rebinding=null;closePanel('kset')};
 $('kdef').onclick=()=>{bind=Object.assign({},DEF);saveBind();renderKeys()};
 document.addEventListener('pointerlockerror',()=>{lockErrs++});
 document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement===cv){hadLock=true;lockErrs=0;return}else if(running&&hadLock)pause()});
@@ -1387,7 +1532,7 @@ function runJobs(){
   $('loadt').textContent=`셰이드 도트 만드는 중… ${Math.round(ji/jobs.length*100)}%`;
   if(ji<jobs.length){setTimeout(runJobs,0);return}
   initScratch([...Object.values(SHM),...Object.values(SHM2),DUM]);
-  const done=()=>{$('load').classList.add('hide');renderCtl();menuEl.classList.remove('hide')};
+  const done=()=>{$('load').classList.add('hide');renderCtl();showTitle()};
   (document.fonts&&document.fonts.load?document.fonts.load('12px Galmuri'):Promise.resolve()).then(done,done);
 }
 setTimeout(runJobs,30);requestAnimationFrame(loop);
