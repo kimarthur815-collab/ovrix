@@ -378,8 +378,8 @@ const ATK={
   cstr:{st:14,ac:3,rc:16,dmg:9,hs:20,push:2.2,lift:0,stop:5,reach:.64,h:.5,r:.3,poses:['cs1','cs2','cr'],crouch:1,heavy:1,cg:'str',cd:36,lvl:'low',name:'하단 스트레이트'},
   fkick:{st:8,ac:6,rc:16,dmg:16,hs:34,push:7,lift:3.4,stop:7,reach:.72,h:.75,r:.36,poses:['fk1','fk2','jp'],air:1,heavy:1,cg:'fkick',cd:120,lvl:'mid',lunge:4.5,name:'날라차기'},
   sweep:{st:16,ac:5,rc:22,dmg:10,hs:30,push:1.5,lift:2.6,stop:6,reach:.7,h:.2,r:.36,poses:['sw1','sw2','cr'],crouch:1,heavy:1,cg:'kick',cd:60,lvl:'low',name:'다리 걸기'},
-  wing:{st:12,ac:5,rc:16,dmg:10,hs:20,push:3,lift:.5,stop:5,reach:1.5,h:1.2,r:.9,poses:['sw1','sw2','sw2'],tl:[[5,'sw0'],[12,'sw1'],[14,'sw2'],[17,'sw3'],[26,'sw3'],[33,'sw2']],tall:1,heavy:1,lvl:'mid',name:'날개치기'},
-  laser:{st:26,ac:12,rc:22,dmg:16,hs:22,push:3,lift:0,stop:5,reach:0,h:0,r:0,poses:['lz1','lz2','lz1'],tl:[[10,'lz0'],[26,'lz1'],[38,'lz2'],[48,'lz1'],[60,'lz0']],beam:1,heavy:1,cg:'laser',cd:120,lvl:'high',name:'눈 레이저'},
+  wing:{st:12,ac:5,rc:16,dmg:10,hs:24,push:7,lift:1.2,stop:6,reach:1.5,h:1.2,r:.9,poses:['sw1','sw2','sw2'],tl:[[5,'sw0'],[12,'sw1'],[14,'sw2'],[17,'sw3'],[26,'sw3'],[33,'sw2']],tall:1,heavy:1,lvl:'mid',name:'날개치기'},
+  laser:{st:34,ac:12,rc:22,dmg:16,hs:22,push:3,lift:0,stop:5,reach:0,h:0,r:0,poses:['lz1','lz2','lz1'],tl:[[13,'lz0'],[34,'lz1'],[46,'lz2'],[56,'lz1'],[68,'lz0']],beam:1,heavy:1,cg:'laser',cd:120,lvl:'high',name:'눈 레이저'},
   pillar:{st:20,ac:1,rc:20,dmg:20,hs:30,push:1,lift:4.5,stop:8,reach:0,h:0,r:0,poses:['sp1','sp2','sp0'],tl:[[8,'sp0'],[20,'sp1'],[24,'sp2'],[34,'sp2'],[41,'sp0']],zap:1,unblock:1,heavy:1,cg:'pillar',cd:300,lvl:'mid',name:'빛기둥'}
 };
 
@@ -572,7 +572,7 @@ function stepSeraphFree(F,T){
     const A=ATK[F.atk];F.af++;
     if(F.af===A.st){sfx(A.beam?'laser':A.zap?'charge':'swingH');if(A.zap)spawnZap(F)}
     if(A.beam){if(F.af>=A.st&&F.af<A.st+A.ac)beamHit(F,A,T)}else if(!A.zap)checkHit(F,A,T);
-    if(A.step&&F.af>=A.st-2&&F.af<A.st+A.ac){F.vx=Math.sin(F.face)*A.step;F.vy=Math.cos(F.face)*A.step}else{F.vx*=.85;F.vy*=.85}
+    {const mx=frozen?0:io.mx,my=frozen?0:io.my;let sp=0;if(mx||my)sp=(io.run?4.2:2)*.35*(F.wbT>0?.6:1);let dx=FW[0]*my+RT[0]*mx,dy=FW[1]*my+RT[1]*mx;const l=Math.hypot(dx,dy)||1,k=Math.min(1,6*FIX);F.vx+=(dx/l*sp-F.vx)*k;F.vy+=(dy/l*sp-F.vy)*k}
     if(F.atk&&F.af>=A.st+A.ac+A.rc)F.atk=null;
   }else{
     F.face=angLerp(F.face,(!frozen&&io.back)?aimYaw(F):y,1-Math.exp(-(F.isAI?10:8)*FIX));
@@ -1122,7 +1122,7 @@ $('aimB').onclick=()=>{set.aim=!set.aim;pl.aim=set.aim;saveSet();renderSet()};
 $('opts').onclick=()=>{$('menu').classList.add('hide');$('sset').classList.remove('hide');renderSet()};
 $('sback').onclick=()=>{$('sset').classList.add('hide');$('menu').classList.remove('hide')};
 // ---- 온라인 대전: PeerJS(WebRTC) 직접 연결, 방을 만든 쪽(호스트)이 게임을 계산하고 참가자는 입력만 보냄
-const NETV=2,CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PEER_PRE='ovrix-shade-';
+const NETV=3,CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PEER_PRE='ovrix-shade-';
 const net={foeCh:'shade',role:null,peer:null,conn:null,pc:null,again:false,peerAgain:false,nq:[],fx:[],lastIn:0,lastSnap:0,inStep:false};
 function isGuest(){return net.role==='guest'}
 function live(){return mode==='online'&&!!net.conn&&phase!=='match'}
