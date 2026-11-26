@@ -219,7 +219,7 @@ function buildSeraph(G,o,J){
 }
 const SPOSES={};
 for(let k=0;k<12;k++){const ph=k/12*Math.PI*2;SPOSES['i'+k]={up:70+8*Math.sin(ph+1.6),mid:10+12*Math.sin(ph),low:-72+6*Math.sin(ph+3),bob:Math.sin(ph)*.8}}
-Object.assign(SPOSES,{sw0:{up:76,mid:22,low:-68,curl:-1/220},sw1:{up:80,mid:34,low:-63,curl:-1/110},sw2:{up:68,mid:12,low:-72,curl:1/60},sw3:{up:58,mid:-8,low:-76,curl:1/26},
+Object.assign(SPOSES,{sw0:{up:76,mid:22,low:-68,curl:-1/220},sw1:{up:85,mid:40,low:-60,curl:-1/105},sw2:{up:68,mid:12,low:-72,curl:1/60},sw3:{up:58,mid:-8,low:-76,curl:1/26},
   lz0:{up:76,mid:16,low:-64},lz1:{up:84,mid:26,low:-57},lz2:{up:88,mid:30,low:-54,curl:-1/140},
   sp0:{up:78,mid:24,low:-58},sp1:{up:86,mid:38,low:-46},sp2:{up:62,mid:-12,low:-82,curl:1/45},
   bl:{up:15,mid:-20,low:-80,curl:1/16},ht:{up:60,mid:-8,low:-78,curl:-1/120},ht2:{up:52,mid:-18,low:-84,curl:-1/80},wb:{up:20,mid:-35,low:-80}});
@@ -378,7 +378,7 @@ const ATK={
   cstr:{st:14,ac:3,rc:16,dmg:9,hs:20,push:2.2,lift:0,stop:5,reach:.64,h:.5,r:.3,poses:['cs1','cs2','cr'],crouch:1,heavy:1,cg:'str',cd:36,lvl:'low',name:'하단 스트레이트'},
   fkick:{st:8,ac:6,rc:16,dmg:16,hs:34,push:7,lift:3.4,stop:7,reach:.72,h:.75,r:.36,poses:['fk1','fk2','jp'],air:1,heavy:1,cg:'fkick',cd:120,lvl:'mid',lunge:4.5,name:'날라차기'},
   sweep:{st:16,ac:5,rc:22,dmg:10,hs:30,push:1.5,lift:2.6,stop:6,reach:.7,h:.2,r:.36,poses:['sw1','sw2','cr'],crouch:1,heavy:1,cg:'kick',cd:60,lvl:'low',name:'다리 걸기'},
-  wing:{st:12,ac:5,rc:16,dmg:10,hs:24,push:7,lift:1.2,stop:6,reach:1.5,h:1.2,r:.9,poses:['sw1','sw2','sw2'],tl:[[5,'sw0'],[12,'sw1'],[14,'sw2'],[17,'sw3'],[26,'sw3'],[33,'sw2']],tall:1,heavy:1,lvl:'mid',name:'날개치기'},
+  wing:{st:16,ac:5,rc:16,dmg:10,hs:24,push:7,lift:1.2,stop:6,reach:1.5,h:1.2,r:.9,poses:['sw1','sw2','sw2'],tl:[[6,'sw0'],[16,'sw1'],[18,'sw2'],[21,'sw3'],[30,'sw3'],[37,'sw2']],tall:1,heavy:1,lvl:'mid',name:'날개치기'},
   laser:{st:34,ac:12,rc:22,dmg:16,hs:22,push:3,lift:0,stop:5,reach:0,h:0,r:0,poses:['lz1','lz2','lz1'],tl:[[13,'lz0'],[34,'lz1'],[46,'lz2'],[56,'lz1'],[68,'lz0']],beam:1,heavy:1,cg:'laser',cd:120,lvl:'high',name:'눈 레이저'},
   pillar:{st:20,ac:1,rc:20,dmg:20,hs:30,push:1,lift:4.5,stop:8,reach:0,h:0,r:0,poses:['sp1','sp2','sp0'],tl:[[8,'sp0'],[20,'sp1'],[24,'sp2'],[34,'sp2'],[41,'sp0']],zap:1,unblock:1,heavy:1,cg:'pillar',cd:300,lvl:'mid',name:'빛기둥'}
 };
@@ -446,10 +446,10 @@ function resolveInput(F){
 }
 function dashDir(F,mx,my){
   if(isSer(F))return;
-  if(!F.ground||F.dashCd>0||F.state!=='free'||F.bstun>0||(F.atk&&!canAct(F)))return;
+  if(!F.ground||F.dash>0||F.dashCd>0||F.state!=='free'||F.bstun>0||(F.atk&&!canAct(F)))return;
   const y=F.io.yaw,FW=[Math.sin(y),Math.cos(y)],RT=[Math.cos(y),-Math.sin(y)];
   let dx=FW[0]*my+RT[0]*mx,dy=FW[1]*my+RT[1]*mx;const l=Math.hypot(dx,dy);if(l<.2){dx=FW[0];dy=FW[1]}else{dx/=l;dy/=l}
-  F.atk=null;F.dash=11;F.dashV=[dx*8.5,dy*8.5];F.face=y;sfx('dash');
+  F.atk=null;F.dash=11;F.dashCd=59;F.dashV=[dx*8.5,dy*8.5];F.face=y;sfx('dash');
 }
 function requestDash(a){if(frozen)return;const mx=a==='right'?1:a==='left'?-1:0,my=a==='fwd'?1:a==='back'?-1:0;if(isGuest()){net.nq.push(['d',mx,my]);return}dashDir(pl,mx,my)}
 function hurt(T){return T.isDummy?{r:.33,h:1.95}:{r:.3,h:T.crouch?1.1:1.75}}
@@ -570,6 +570,7 @@ function stepSeraphFree(F,T){
   const y=io.yaw,FW=[Math.sin(y),Math.cos(y)],RT=[Math.cos(y),-Math.sin(y)];
   if(F.atk){
     const A=ATK[F.atk];F.af++;
+    if(F.af===1&&F.atk==='wing')sfx('swing');
     if(F.af===A.st){sfx(A.beam?'laser':A.zap?'charge':'swingH');if(A.zap)spawnZap(F)}
     if(A.beam){if(F.af>=A.st&&F.af<A.st+A.ac)beamHit(F,A,T)}else if(!A.zap)checkHit(F,A,T);
     {const mx=frozen?0:io.mx,my=frozen?0:io.my;let sp=0;if(mx||my)sp=(io.run?4.2:2)*.35*(F.wbT>0?.6:1);let dx=FW[0]*my+RT[0]*mx,dy=FW[1]*my+RT[1]*mx;const l=Math.hypot(dx,dy)||1,k=Math.min(1,6*FIX);F.vx+=(dx/l*sp-F.vx)*k;F.vy+=(dy/l*sp-F.vy)*k}
@@ -614,13 +615,13 @@ function stepFighter(F,T){
       const A=ATK[F.atk];F.af++;if(F.af===A.st)sfx(A.heavy?'swingH':'swing');
       if(A.crouch)F.crouch=true;
       if(A.selfVz&&F.af===A.st){F.vz=Math.max(F.vz,F.ground?A.selfVz:3.6);F.ground=false}
-      if(F.ground){const f=[Math.sin(F.face),Math.cos(F.face)],sp=(A.step&&F.af>=A.st-2&&F.af<A.st+A.ac)?A.step:0;if(sp){F.vx=f[0]*sp;F.vy=f[1]*sp}else{F.vx*=.8;F.vy*=.8}}
+      if(F.ground){const f=[Math.sin(F.face),Math.cos(F.face)],sp=(A.step&&F.af>=A.st-2&&F.af<A.st+A.ac)?A.step:0;if(sp){F.vx=f[0]*sp;F.vy=f[1]*sp}else{const mx=frozen?0:io.mx,my=frozen?0:io.my,yy=io.yaw;let ms=0;if(mx||my)ms=(A.crouch?.8:io.run?4.8:2.3)*.35;let dx=Math.sin(yy)*my+Math.cos(yy)*mx,dy=Math.cos(yy)*my-Math.sin(yy)*mx;const l=Math.hypot(dx,dy)||1,k=Math.min(1,8*FIX);F.vx+=(dx/l*ms-F.vx)*k;F.vy+=(dy/l*ms-F.vy)*k}}
       checkHit(F,A,T);
       if(F.atk&&F.af>=A.st+A.ac+A.rc)F.atk=null;
     }else if(F.dash>0){
       F.dash--;F.vx=F.dashV[0];F.vy=F.dashV[1];
       if(frame%5===0)F.trail.push({x:F.x,y:F.y,z:F.z,face:F.face,t:10});
-      if(F.dash===0){F.vx*=.3;F.vy*=.3;F.dashCd=48}
+      if(F.dash===0){F.vx*=.3;F.vy*=.3}
     }else{
       F.face=angLerp(F.face,(!frozen&&io.back&&F.ground)?aimYaw(F):y,1-Math.exp(-(F.isAI?16:12)*FIX));
       const mx=frozen?0:io.mx,my=frozen?0:io.my,back=!frozen&&io.back;
@@ -828,7 +829,7 @@ function poseSer(F){
   if(F.state==='ko'||F.state==='kodown')return'wb';
   if(F.state!=='free')return F.stun>F.stunMax*.5?'ht2':'ht';
   if(F.bstun>0||F.block)return'bl';
-  if(F.atk){for(const e of ATK[F.atk].tl)if(F.af<e[0])return e[1]}
+  if(F.atk&&ATK[F.atk].tl){for(const e of ATK[F.atk].tl)if(F.af<e[0])return e[1]}
   if(F.wbT>0)return'wb';
   return'i'+(Math.floor(frame/(F.z>.3||Math.hypot(F.vx,F.vy)>1?3:5))%12);
 }
@@ -1016,6 +1017,7 @@ function visOf(F){
   const vr=F.vx*C.r[0]+F.vy*C.r[1];o.rot=Math.max(-.1,Math.min(.1,vr*(ser?.012:.025)));
   let push=0,px=F.fx,py=F.fy;
   if(F.flash>0){push=.15*F.flash/5;if(!ser){o.sx=1+.07*F.flash/5;o.sy=1-.07*F.flash/5}}
+  if(ser&&F.atk==='wing'&&F.af<ATK.wing.st){push=.16*F.af/ATK.wing.st;px=-Math.sin(F.face);py=-Math.cos(F.face)}
   if(ser&&F.atk==='laser'){const A=ATK.laser,k=F.af-A.st;if(k>=0&&k<6){push=.14*(1-k/6);px=-Math.sin(F.lzY);py=-Math.cos(F.lzY)}}
   if(push){const p0=proj(toCam(F.x,F.y,F.z)),p1=proj(toCam(F.x+px*push,F.y+py*push,F.z));o.dx=p1[0]-p0[0];o.dy=p1[1]-p0[1]}
   if(ser){if(F.z>.05&&F.wbT<=0)o.lift=.07*Math.sin(performance.now()/260)}
@@ -1122,7 +1124,7 @@ $('aimB').onclick=()=>{set.aim=!set.aim;pl.aim=set.aim;saveSet();renderSet()};
 $('opts').onclick=()=>{$('menu').classList.add('hide');$('sset').classList.remove('hide');renderSet()};
 $('sback').onclick=()=>{$('sset').classList.add('hide');$('menu').classList.remove('hide')};
 // ---- 온라인 대전: PeerJS(WebRTC) 직접 연결, 방을 만든 쪽(호스트)이 게임을 계산하고 참가자는 입력만 보냄
-const NETV=3,CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PEER_PRE='ovrix-shade-';
+const NETV=4,CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',PEER_PRE='ovrix-shade-';
 const net={foeCh:'shade',role:null,peer:null,conn:null,pc:null,again:false,peerAgain:false,nq:[],fx:[],lastIn:0,lastSnap:0,inStep:false};
 function isGuest(){return net.role==='guest'}
 function live(){return mode==='online'&&!!net.conn&&phase!=='match'}
